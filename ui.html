@@ -28,6 +28,42 @@
     .sidebar small {
       color: #9ca3af;
     }
+    .bank-feeds {
+      margin-top: 20px;
+    }
+    .bank-feeds h2 {
+      font-size: 14px;
+      margin: 0 0 8px;
+      color: #e5e7eb;
+    }
+    .upload-btn {
+      background: #374151;
+      border: 1px solid #4b5563;
+      color: #e5e7eb;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-right: 4px;
+      margin-bottom: 4px;
+    }
+    .upload-btn:hover {
+      background: #4b5563;
+    }
+    .drop-zone {
+      border: 2px dashed #4b5563;
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 12px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    .drop-zone.dragover {
+      border-color: #4f46e5;
+      background: #1f2933;
+    }
     .main {
       flex: 1;
       display: flex;
@@ -100,9 +136,18 @@
   <div class="sidebar">
     <h1>PHLedger</h1>
     <small>Local accounting agent</small>
+    <div class="bank-feeds">
+      <h2>Bank Feeds</h2>
+      <button class="upload-btn" id="upload-anz">Upload ANZ CSV</button>
+      <button class="upload-btn" id="upload-rbc">Upload RBC CSV</button>
+      <button class="upload-btn" id="view-tx">View Transactions</button>
+      <button class="upload-btn" id="view-analytics">View Analytics</button>
+      <div class="drop-zone" id="drop-zone">Drop CSV here or click to browse</div>
+    </div>
     <div style="margin-top:16px;font-size:12px;color:#9ca3af;">
       Try prompts like:
       <ul>
+        <li>migrate</li>
         <li>draft BAS for AU company</li>
         <li>draft AU personal tax</li>
         <li>draft CA corporate tax</li>
@@ -122,6 +167,11 @@
     const chatEl = document.getElementById("chat");
     const inputEl = document.getElementById("input");
     const sendEl = document.getElementById("send");
+    const uploadAnzEl = document.getElementById("upload-anz");
+    const uploadRbcEl = document.getElementById("upload-rbc");
+    const viewTxEl = document.getElementById("view-tx");
+    const viewAnalyticsEl = document.getElementById("view-analytics");
+    const dropZoneEl = document.getElementById("drop-zone");
 
     function addMessage(text, role) {
       const div = document.createElement("div");
@@ -162,6 +212,121 @@
       }
     }
 
+    async function uploadFile(file, bank) {
+      const formData = new FormData();
+      formData.append("bank", bank);
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/upload", {
+          method: "POST",
+          body: formData
+        });
+        if (!res.ok) {
+          addMessage("Upload error: " + res.status + " " + res.statusText, "agent");
+        } else {
+          const data = await res.json();
+          addMessage(data.message, "agent");
+        }
+      } catch (e) {
+        addMessage("Upload network error: " + e.message, "agent");
+      }
+    }
+
+    async function viewTransactions() {
+      try {
+        const res = await fetch("/transactions");
+        if (!res.ok) {
+          addMessage("Error fetching transactions: " + res.status + " " + res.statusText, "agent");
+        } else {
+          const txs = await res.json();
+          let msg = `Found ${txs.length} transactions:\n\n`;
+          for (const tx of txs.slice(0, 10)) {  // Show first 10
+            msg += `${tx.date} ${tx.description} ${tx.amount} ${tx.currency}\n`;
+          }
+          if (txs.length > 10) {
+            msg += `... and ${txs.length - 10} more`;
+          }
+          addMessage(msg, "agent");
+        }
+      } catch (e) {
+        addMessage("Network error: " + e.message, "agent");
+      }
+    }
+
+    function handleFileSelect(file) {
+      // Auto-detect bank from filename or ask? For simplicity, assume ANZ if 'anz' in name, else RBC
+      const bank = file.name.toLowerCase().includes("anz") ? "anz" : "rbc";
+      uploadFile(file, bank);
+    }
+
+    uploadAnzEl.addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".csv";
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) uploadFile(file, "anz");
+      };
+      input.click();
+    });
+
+    uploadRbcEl.addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".csv";
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) uploadFile(file, "rbc");
+      };
+      input.click();
+    });
+
+    viewTxEl.addEventListener("click", viewTransactions);
+
+    viewAnalyticsEl.addEventListener("click", async () => {
+        try {
+            const res = await fetch("/analytics");
+            if (!res.ok) {
+                addMessage("Error fetching analytics: " + res.status + " " + res.statusText, "agent");
+            } else {
+                const data = await res.json();
+                addMessage(`Analytics:\n${JSON.stringify(data, null, 2)}`, "agent");
+            }
+        } catch (e) {
+            addMessage("Network error: " + e.message, "agent");
+        }
+    });
+
+    dropZoneEl.addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".csv";
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) handleFileSelect(file);
+      };
+      input.click();
+    });
+
+    dropZoneEl.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZoneEl.classList.add("dragover");
+    });
+
+    dropZoneEl.addEventListener("dragleave", () => {
+      dropZoneEl.classList.remove("dragover");
+    });
+
+    dropZoneEl.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZoneEl.classList.remove("dragover");
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFileSelect(files[0]);
+      }
+    });
+
     sendEl.addEventListener("click", sendMessage);
     inputEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
@@ -170,7 +335,7 @@
       }
     });
 
-    addMessage("Hi, I'm your local PHLedger agent. Ask me about BAS, AU/CA tax, or P&L.", "agent");
+    addMessage("Hi, I'm your local PHLedger agent. Upload CSVs or ask me about BAS, AU/CA tax, or P&L.", "agent");
   </script>
 </body>
 </html>

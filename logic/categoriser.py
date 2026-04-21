@@ -1,4 +1,4 @@
-from ..models import Transaction, ChartOfAccount
+from models import Transaction, ChartOfAccount
 from typing import List
 
 def auto_categorise(txs: List[Transaction], chart: List[ChartOfAccount]):

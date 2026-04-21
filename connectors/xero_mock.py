@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 from typing import List
-from ..models import Transaction, ChartOfAccount
+from models import Transaction, ChartOfAccount
 
 class XeroMockConnector:
     def get_chart_of_accounts(self) -> List[ChartOfAccount]:

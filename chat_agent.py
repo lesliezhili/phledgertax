@@ -1,15 +1,15 @@
 from datetime import date, timedelta
 from pathlib import Path
 
-from .connectors.xero_mock import XeroMockConnector
-from .connectors.csv_ingestion import CSVIngestionManager
+from connectors.xero_mock import XeroMockConnector
+from connectors.csv_ingestion import CSVIngestionManager
 
-from .logic.categoriser import auto_categorise
-from .logic.bas_au import generate_bas_draft
-from .logic.tax_au import draft_au_company_tax, draft_au_personal_tax
-from .logic.tax_ca import draft_ca_corporate_tax, draft_ca_personal_tax
+from logic.categoriser import auto_categorise
+from logic.bas_au import generate_bas_draft
+from logic.tax_au import draft_au_company_tax, draft_au_personal_tax
+from logic.tax_ca import draft_ca_corporate_tax, draft_ca_personal_tax
 
-from .models import ChatResponse
+from models import ChatResponse
 
 
 class PHLedgerAgent:

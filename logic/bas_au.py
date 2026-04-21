@@ -1,6 +1,6 @@
 from datetime import date
 from typing import List
-from ..models import Transaction, BASDraft
+from models import Transaction, BASDraft
 
 def generate_bas_draft(txs: List[Transaction], start: date, end: date):
     gst_rate = 0.10

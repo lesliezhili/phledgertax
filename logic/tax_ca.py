@@ -1,4 +1,4 @@
-from ..models import TaxDraftCACorporate, TaxDraftCAPersonal, Transaction
+from models import TaxDraftCACorporate, TaxDraftCAPersonal, Transaction
 
 def draft_ca_corporate_tax(year: int, txs: list[Transaction]):
     income = sum(tx.amount for tx in txs if tx.amount > 0)
