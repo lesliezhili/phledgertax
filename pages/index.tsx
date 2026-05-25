@@ -185,6 +185,45 @@ export default function PHLedger() {
     });
   }
 
+  async function loadSC() {
+    try {
+      const [cfgR, bkR, pyR] = await Promise.all([
+        fetch('/api/silverconnect/config'),
+        fetch('/api/silverconnect/bookings'),
+        fetch('/api/silverconnect/payouts'),
+      ]);
+      if (cfgR.ok) setScConfig(await cfgR.json());
+      if (bkR.ok)  { const d = await bkR.json(); setScBookings(d.bookings||[]); }
+      if (pyR.ok)  { const d = await pyR.json(); setScPayouts(d.payouts||[]); setScPl(d.platform_pl||{}); }
+    } catch {}
+  }
+  async function addScBooking() {
+    if (!scNewGross || !scNewProvider) return;
+    try {
+      const r = await fetch('/api/silverconnect/bookings',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({gross_amount:parseFloat(scNewGross),provider_name:scNewProvider,client_name:scNewClient,service_type:'Care Service'})});
+      if (r.ok) { setScNewGross(''); setScNewProvider(''); setScNewClient(''); await loadSC(); showToast('Booking added','success'); }
+    } catch { showToast('Failed to add booking','danger'); }
+  }
+  async function processScRefund() {
+    if (!scRefundId) return;
+    try {
+      const r = await fetch('/api/silverconnect/refunds',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({booking_id:scRefundId,hours_notice:scHours!==''?parseFloat(scHours):null,reason:'Client request'})});
+      const d = await r.json();
+      if (r.ok) { setScRefundId(''); setScHours(''); await loadSC(); showToast(d.message||'Refund processed','success'); }
+      else showToast(d.error||'Refund failed','danger');
+    } catch { showToast('Refund request failed','danger'); }
+  }
+  async function syncScConfig() {
+    setScSyncing(true);
+    try {
+      const r = await fetch('/api/silverconnect/config');
+      if (r.ok) { setScConfig(await r.json()); showToast('Config synced','success'); }
+    } catch { showToast('Sync failed','danger'); }
+    setScSyncing(false);
+  }
+
   async function go(p) {
     setPg(p);
     if (p==='tx')   loadTx();
@@ -192,6 +231,7 @@ export default function PHLedger() {
     if (p==='tax')  loadTax();
     if (p==='fin')  loadFin();
     if (p==='mig')  { try { setMigD(await api('/api/migrate')); } catch {} }
+    if (p==='sc')   loadSC();
   }
 
   async function refresh() { await loadAn(); await loadTx(); }
