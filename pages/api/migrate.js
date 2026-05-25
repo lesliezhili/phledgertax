@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
-import { loadAll } from '../../../lib/store.js';
-import { autoCategorise, DEFAULT_COA, DEFAULT_RULES } from '../../../lib/categoriser.js';
+import { loadAll } from '@/lib/store.js';
+import { autoCategorise, DEFAULT_COA, DEFAULT_RULES } from '@/lib/categoriser.js';
 
 export default function handler(req, res) {
   if (req.method === 'GET') {
