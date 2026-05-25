@@ -22,12 +22,12 @@ import Script from 'next/script';
 const PAGE_TITLES = {
   dash:'Dashboard', tx:'Transactions', bank:'Banking',
   bas:'BAS & GST', tax:'Tax Estimates', fin:'Financial Statements',
-  chat:'AI Assistant', mig:'Migration'
+  chat:'AI Assistant', mig:'Migration', sc:'SilverConnect'
 };
 const PAGE_SUBS = {
   dash:'Financial overview', tx:'All imported transactions', bank:'Upload bank CSV exports',
   bas:'AU BAS & CA GST/HST', tax:'AU & CA tax estimates', fin:'P&L · Balance Sheet · Cash Flow',
-  chat:'Ask questions about your finances', mig:'Import historical data'
+  chat:'Ask questions about your finances', mig:'Import historical data', sc:'Platform bookkeeping · Provider payouts · Refunds'
 };
 const CAT_COLORS = {
   '200':'#D1FAE5,#065F46','201':'#D1FAE5,#065F46','202':'#DCFCE7,#166534',
@@ -68,6 +68,16 @@ export default function PHLedger() {
   const [migR, setMigR]         = useState(false);
   const [toast, setToast]       = useState<any>({show:false,msg:'',ty:'success'});
   const [dragAU, setDragAU]     = useState(false);
+  const [scConfig, setScConfig] = useState<any>({platform_fee_rate:0.15,provider_rate:0.85,upstream_synced:false});
+  const [scBookings, setScBookings] = useState<any[]>([]);
+  const [scPl, setScPl] = useState<any>({});
+  const [scPayouts, setScPayouts] = useState<any[]>([]);
+  const [scRefundId, setScRefundId] = useState('');
+  const [scHours, setScHours] = useState('');
+  const [scNewGross, setScNewGross] = useState('');
+  const [scNewProvider, setScNewProvider] = useState('');
+  const [scNewClient, setScNewClient] = useState('');
+  const [scSyncing, setScSyncing] = useState(false);
   const [dragCA, setDragCA]     = useState(false);
   const fAU = useRef(null), fCA = useRef(null), chatBox = useRef(null);
   const charts = useRef({});
@@ -271,6 +281,12 @@ export default function PHLedger() {
           ))}
           <div className="nav-lbl">Reports</div>
           {[['bas','file-earmark-text','BAS / GST'],['tax','receipt','Tax Estimates'],['fin','bar-chart-line','Financials']].map(([p,ic,lb])=>(
+            <a key={p} href="#" className={pg===p?'active':''} onClick={e=>{e.preventDefault();go(p);}}>
+              <i className={`bi bi-${ic}`}/>{lb}
+            </a>
+          ))}
+          <div className="nav-lbl">Platforms</div>
+          {[['sc','heart-pulse','SilverConnect']].map(([p,ic,lb])=>(
             <a key={p} href="#" className={pg===p?'active':''} onClick={e=>{e.preventDefault();go(p);}}>
               <i className={`bi bi-${ic}`}/>{lb}
             </a>
@@ -646,6 +662,201 @@ export default function PHLedger() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ── SILVERCONNECT ── */}
+          {pg==='sc' && (
+            <div>
+              <div className="row g-4 mb-4">
+
+                {/* Platform config card */}
+                <div className="col-md-4">
+                  <div className="cs h-100">
+                    <div className="cs-h">
+                      <h6><i className="bi bi-sliders2"/>Platform Config</h6>
+                      <span className={`pill ${scConfig.upstream_synced?'ok':'warn'}`}>
+                        {scConfig.upstream_synced?'Upstream synced':'Local default'}
+                      </span>
+                    </div>
+                    <div className="cs-b">
+                      <div className="rm"><span className="rl">Platform Fee</span><span className="rv">{((scConfig.platform_fee_rate||0.15)*100).toFixed(0)}%</span></div>
+                      <div className="rm"><span className="rl">Provider Rate</span><span className="rv pos">{((scConfig.provider_rate||0.85)*100).toFixed(0)}%</span></div>
+                      <div className="rm"><span className="rl">Currency</span><span className="rv">{scConfig.currency||'AUD'}</span></div>
+                      <div className="rm"><span className="rl">Full Refund ≥</span><span className="rv">{scConfig.cancellation_policy?.full_refund_hours||24}h notice</span></div>
+                      <div className="rm"><span className="rl">Partial Refund ≥</span><span className="rv">{scConfig.cancellation_policy?.partial_refund_hours||2}h notice ({((scConfig.cancellation_policy?.partial_refund_rate||0.5)*100).toFixed(0)}%)</span></div>
+                      <div className="rm"><span className="rl">Platform Fee Refundable</span><span className="rv">{scConfig.cancellation_policy?.platform_fee_refundable!==false?'Yes':'No'}</span></div>
+                      <div className="rm"><span className="rl">Updated</span><span className="rv">{scConfig.last_updated||'—'}</span></div>
+                      <div className="mt-3">
+                        <button className="btn-x sec w-100" onClick={syncScConfig} disabled={scSyncing}>
+                          {scSyncing?<><span className="spinner-border" style={{width:'.8rem',height:'.8rem',borderWidth:'2px'}}/>&nbsp;Syncing...</>:<><i className="bi bi-arrow-repeat"/>Sync from Upstream</>}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Platform P&L summary */}
+                <div className="col-md-8">
+                  <div className="cs h-100">
+                    <div className="cs-h"><h6><i className="bi bi-graph-up-arrow"/>Platform P&amp;L</h6></div>
+                    <div className="cs-b">
+                      <div className="stat-strip mb-3">
+                        <div className="ss-item"><div className="ss-val">{(scPl.booking_counts?.total||0).toLocaleString()}</div><div className="ss-lbl">Bookings</div></div>
+                        <div className="ss-item"><div className="ss-val pos">${fmt(scPl.total_fee_revenue)}</div><div className="ss-lbl">Fee Revenue</div></div>
+                        <div className="ss-item"><div className="ss-val neg">${fmt(scPl.total_refunds_issued)}</div><div className="ss-lbl">Refunds</div></div>
+                        <div className="ss-item"><div className={`ss-val ${(scPl.net_platform_revenue||0)>=0?'pos':'neg'}`}>${fmt(scPl.net_platform_revenue)}</div><div className="ss-lbl">Net Revenue</div></div>
+                      </div>
+                      <div className="row g-2" style={{fontSize:'.78rem'}}>
+                        {[
+                          ['Total Gross Bookings',fmt(scPl.total_gross_bookings),''],
+                          ['Total Provider Payouts',fmt(scPl.total_provider_payouts),'neg'],
+                          ['Cancellation Fees',fmt(scPl.total_cancellation_fees),'pos'],
+                          ['Effective Fee Rate',((scPl.effective_fee_rate||0)*100).toFixed(1)+'%',''],
+                        ].map(([l,v,c])=>(
+                          <div key={l} className="col-6"><div className="rm"><span className="rl">{l}</span><span className={`rv ${c}`}>{l.includes('Rate')?v:'$'+v}</span></div></div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="row g-4 mb-4">
+                {/* Add booking form */}
+                <div className="col-md-5">
+                  <div className="cs">
+                    <div className="cs-h"><h6><i className="bi bi-plus-circle"/>New Booking</h6></div>
+                    <div className="cs-b">
+                      <div className="row g-2 mb-2">
+                        <div className="col-12">
+                          <label style={{fontSize:'.73rem',fontWeight:600,color:'var(--tx-3)'}}>Client Name</label>
+                          <input className="form-control form-control-sm" placeholder="e.g. Margaret Chen" value={scNewClient} onChange={(e: ChangeEvent<HTMLInputElement>)=>setScNewClient(e.target.value)}/>
+                        </div>
+                        <div className="col-12">
+                          <label style={{fontSize:'.73rem',fontWeight:600,color:'var(--tx-3)'}}>Service Provider</label>
+                          <input className="form-control form-control-sm" placeholder="Provider name or ID" value={scNewProvider} onChange={(e: ChangeEvent<HTMLInputElement>)=>setScNewProvider(e.target.value)}/>
+                        </div>
+                        <div className="col-12">
+                          <label style={{fontSize:'.73rem',fontWeight:600,color:'var(--tx-3)'}}>Gross Amount ($)</label>
+                          <input className="form-control form-control-sm" type="number" placeholder="e.g. 120.00" value={scNewGross} onChange={(e: ChangeEvent<HTMLInputElement>)=>setScNewGross(e.target.value)}/>
+                        </div>
+                      </div>
+                      {scNewGross && !isNaN(parseFloat(scNewGross)) && (
+                        <div className="stat-strip mb-2">
+                          <div className="ss-item"><div className="ss-val neg">${fmt(parseFloat(scNewGross)*(scConfig.platform_fee_rate||0.15))}</div><div className="ss-lbl">Platform Fee ({((scConfig.platform_fee_rate||0.15)*100).toFixed(0)}%)</div></div>
+                          <div className="ss-item"><div className="ss-val pos">${fmt(parseFloat(scNewGross)*(scConfig.provider_rate||0.85))}</div><div className="ss-lbl">Provider Payout ({((scConfig.provider_rate||0.85)*100).toFixed(0)}%)</div></div>
+                        </div>
+                      )}
+                      <button className="btn-x pri w-100" onClick={addScBooking} disabled={!scNewGross||!scNewProvider}>
+                        <i className="bi bi-check-circle"/>Record Booking
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cancellation refund form */}
+                <div className="col-md-7">
+                  <div className="cs">
+                    <div className="cs-h">
+                      <h6><i className="bi bi-arrow-return-left"/>Cancellation &amp; Refund</h6>
+                      <span className="pill pr" style={{fontSize:'.62rem'}}>Upstream policy applied</span>
+                    </div>
+                    <div className="cs-b">
+                      <div className="row g-2 mb-3">
+                        <div className="col-7">
+                          <label style={{fontSize:'.73rem',fontWeight:600,color:'var(--tx-3)'}}>Booking ID</label>
+                          <input className="form-control form-control-sm" placeholder="BK-... or booking ID" value={scRefundId} onChange={(e: ChangeEvent<HTMLInputElement>)=>setScRefundId(e.target.value)}/>
+                        </div>
+                        <div className="col-5">
+                          <label style={{fontSize:'.73rem',fontWeight:600,color:'var(--tx-3)'}}>Hours Notice <span style={{fontWeight:400,color:'var(--tx-4)'}}>(blank = pending upstream)</span></label>
+                          <input className="form-control form-control-sm" type="number" placeholder="e.g. 36" value={scHours} onChange={(e: ChangeEvent<HTMLInputElement>)=>setScHours(e.target.value)}/>
+                        </div>
+                      </div>
+                      <div className="row g-2 mb-3" style={{fontSize:'.75rem',color:'var(--tx-3)'}}>
+                        <div className="col-4"><span className="pill ok">≥{scConfig.cancellation_policy?.full_refund_hours||24}h → Full refund</span></div>
+                        <div className="col-4"><span className="pill warn">≥{scConfig.cancellation_policy?.partial_refund_hours||2}h → {((scConfig.cancellation_policy?.partial_refund_rate||0.5)*100).toFixed(0)}% refund</span></div>
+                        <div className="col-4"><span className="pill err">&lt;{scConfig.cancellation_policy?.partial_refund_hours||2}h → No refund</span></div>
+                      </div>
+                      <button className="btn-x err" onClick={processScRefund} disabled={!scRefundId}>
+                        <i className="bi bi-x-circle"/>Process Cancellation
+                      </button>
+                      <div className="mt-3" style={{fontSize:'.75rem',color:'var(--tx-3)'}}>
+                        <i className="bi bi-info-circle me-1"/>Refund policy rates come from the upstream SilverConnect system config. Leave hours blank to flag as pending upstream decision.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bookings table */}
+              <div className="cs mb-4">
+                <div className="cs-h">
+                  <h6><i className="bi bi-table"/>All Bookings</h6>
+                  <span className="pill neu">{scBookings.length} total</span>
+                </div>
+                <div className="cs-b" style={{padding:0}}>
+                  {scBookings.length === 0 ? (
+                    <div className="empty-state"><i className="bi bi-heart-pulse"/><p className="es-title">No bookings yet</p><p>Add a booking above to see the fee split here.</p></div>
+                  ) : (
+                    <div style={{overflowX:'auto'}}>
+                      <table className="tx-tbl">
+                        <thead><tr>
+                          <th>Booking ID</th><th>Client</th><th>Provider</th>
+                          <th>Gross</th><th>Platform Fee</th><th>Provider Payout</th>
+                          <th>Status</th><th>Date</th>
+                        </tr></thead>
+                        <tbody>
+                          {scBookings.map(b=>(
+                            <tr key={b.booking_id}>
+                              <td style={{fontFamily:'monospace',fontSize:'.76rem'}}>{b.booking_id}</td>
+                              <td>{b.client_name||'—'}</td>
+                              <td>{b.provider_name||b.provider_id||'—'}</td>
+                              <td className="fw-600">${fmt(b.gross_amount)}</td>
+                              <td><span className="neg">${fmt(b.platform_fee)}</span> <span style={{fontSize:'.68rem',color:'var(--tx-3)'}}>({((b.fee_rate_applied||0.15)*100).toFixed(0)}%)</span></td>
+                              <td><span className="pos">${fmt(b.provider_payout)}</span></td>
+                              <td>
+                                <span className={`pill ${b.status==='completed'?'ok':b.status==='refunded'?'err':b.status==='cancelled'?'warn':'pr'}`}>
+                                  {b.status}
+                                </span>
+                              </td>
+                              <td style={{fontSize:'.76rem',color:'var(--tx-3)'}}>{b.service_date}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Provider payouts */}
+              {scPayouts.length > 0 && (
+                <div className="cs">
+                  <div className="cs-h"><h6><i className="bi bi-people"/>Provider Payout Summary</h6></div>
+                  <div className="cs-b" style={{padding:0}}>
+                    <table className="tx-tbl">
+                      <thead><tr>
+                        <th>Provider</th><th>Bookings</th><th>Gross</th>
+                        <th>Platform Fee</th><th>Gross Payout</th><th>Clawbacks</th><th>Net Payout</th>
+                      </tr></thead>
+                      <tbody>
+                        {scPayouts.map(p=>(
+                          <tr key={p.provider_id}>
+                            <td><strong>{p.provider_name}</strong></td>
+                            <td>{p.booking_count} <span style={{fontSize:'.72rem',color:'var(--tx-3)'}}>({p.completed_count} done, {p.cancelled_count} cancelled)</span></td>
+                            <td>${fmt(p.gross_total)}</td>
+                            <td className="neg">${fmt(p.platform_fee_total)}</td>
+                            <td>${fmt(p.payout_gross)}</td>
+                            <td>{p.clawback_total>0?<span className="neg">-${fmt(p.clawback_total)}</span>:<span style={{color:'var(--tx-4)'}}>—</span>}</td>
+                            <td><strong className="pos">${fmt(p.net_payout)}</strong></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
