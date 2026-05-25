@@ -219,6 +219,19 @@ export default function PHLedger() {
       const r = await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})});
       const d = await r.json();
       setMsgs(ms=>[...ms,{role:'bot',text:d.message}]);
+      // Handle server-side actions returned by chat agent
+      if (d.action === 'migrate') {
+        setMsgs(ms=>[...ms,{role:'bot',text:'Starting migration...'}]);
+        await runMigration();
+        setMsgs(ms=>[...ms,{role:'bot',text:'✅ Migration complete! Check the Migrate tab for details.'}]);
+      } else if (d.action === 'sync_supabase') {
+        setMsgs(ms=>[...ms,{role:'bot',text:'Uploading to Supabase...'}]);
+        try {
+          const sr = await fetch('/api/migrate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target:'supabase'})});
+          const sd = await sr.json();
+          setMsgs(ms=>[...ms,{role:'bot',text:`✅ Supabase sync complete: ${sd.total_transactions ?? 0} transactions uploaded.`}]);
+        } catch { setMsgs(ms=>[...ms,{role:'bot',text:'❌ Supabase sync failed. Check SUPABASE_URL and SUPABASE_KEY env vars.'}]); }
+      }
     } catch { setMsgs(ms=>[...ms,{role:'bot',text:'Error connecting to server.'}]); }
     setCloading(false);
     setTimeout(()=>{ if(chatBox.current) chatBox.current.scrollTop=chatBox.current.scrollHeight; },100);
@@ -589,7 +602,7 @@ export default function PHLedger() {
                   </button>
                 </div>
                 <div className="mt-3 d-flex flex-wrap gap-2">
-                  {['help','status','au p&l','ca p&l','bas','quarterly bas','annual hst','au company tax'].map(cmd=>(
+                  {['help','status','migrate','au p&l','ca p&l','bas','quarterly bas','au company tax'].map(cmd=>(
                     <button key={cmd} className="btn btn-sm btn-outline-secondary" onClick={()=>{setCi(cmd);setTimeout(sendChat,50);}}>{cmd}</button>
                   ))}
                 </div>
