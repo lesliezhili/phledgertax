@@ -1,130 +1,125 @@
-from datetime import date, timedelta
-from pathlib import Path
-
-from connectors.xero_connector import XeroConnector
+from models import ChatResponse, Transaction
 from connectors.csv_ingestion import CSVIngestionManager
-
-from logic.categoriser import auto_categorise
-from logic.bas_au import generate_bas_draft
+from db.store import TransactionStore, AU_BANKS, CA_BANKS
+from logic.bas_au import generate_bas_draft, generate_quarterly_bas
 from logic.tax_au import draft_au_company_tax, draft_au_personal_tax
-from logic.tax_ca import draft_ca_corporate_tax, draft_ca_personal_tax, generate_quarterly_gst
+from logic.tax_ca import draft_ca_corporate_tax, draft_ca_personal_tax, generate_quarterly_gst, generate_annual_hst
 from logic.financial_statements import generate_financial_statements
-
-from models import ChatResponse
+from datetime import date
+from typing import List
+import os
 
 
 class PHLedgerAgent:
     def __init__(self):
-        # CSV ingestion manager
-        base = Path(__file__).resolve().parent / "bank_data"
-        self.ingestor = CSVIngestionManager(base)
+        base = os.environ.get("BANK_DATA_PATH", "bank_data")
+        self.store = TransactionStore(base)
+        self.ingestor = self.store._ingestor
 
-        # Initial migration connector (mock or real Xero later)
-        self.xero_migration = XeroConnector()
+    def _au(self) -> List[Transaction]:
+        return self.store.load_country("AU")
 
-    def migrate_from_xero(self):
-        """
-        One-time migration from XeroConnector into CSV folders.
-        After this, CSV ingestion is the long-term source of truth.
-        """
-        base = Path(__file__).resolve().parent / "bank_data" / "anz"
-        base.mkdir(parents=True, exist_ok=True)
+    def _ca(self) -> List[Transaction]:
+        return self.store.load_country("CA")
 
-        today = date.today()
-        start = today - timedelta(days=365 * 7)
+    def _all(self) -> List[Transaction]:
+        return self.store.load_all()
 
-        txs = self.xero_migration.get_transactions(start, today)
+    def handle(self, message: str) -> ChatResponse:
+        msg = message.lower().strip()
 
-        # Save into CSV by year/month
-        for t in txs:
-            year = str(t.date.year)
-            month = f"{t.date.month:02d}"
+        if msg in ("help", "?", "commands"):
+            return ChatResponse(message=(
+                "PHLedger Commands:\n"
+                "  help                — this list\n"
+                "  status              — transaction counts by country\n"
+                "AU (🇦🇺):\n"
+                "  au transactions     — list AU transactions\n"
+                "  au p&l              — AU profit & loss\n"
+                "  au financials       — AU financial statements\n"
+                "  bas                 — AU BAS draft (current period)\n"
+                "  quarterly bas       — 4 ATO quarters\n"
+                "  au company tax      — AU company tax estimate\n"
+                "  au personal tax     — AU personal tax estimate\n"
+                "CA (🇨🇦):\n"
+                "  ca transactions     — list CA transactions\n"
+                "  ca p&l              — CA profit & loss\n"
+                "  ca financials       — CA financial statements\n"
+                "  gst                 — CA quarterly GST\n"
+                "  annual hst          — CA annual HST summary\n"
+                "  ca corporate tax    — CA corporate tax estimate\n"
+                "  ca personal tax     — CA personal tax estimate\n"
+            ))
 
-            folder = base / year / month
-            folder.mkdir(parents=True, exist_ok=True)
+        if msg == "status":
+            au = self._au()
+            ca = self._ca()
+            return ChatResponse(message=f"AU: {len(au)} transactions | CA: {len(ca)} transactions | Total: {len(au) + len(ca)}")
 
-            csv_path = folder / f"{t.id}.csv"
-            if not csv_path.exists():
-                csv_path.write_text(
-                    "date,description,amount,currency,id\n"
-                    f"{t.date},{t.description},{t.amount},{t.currency},{t.id}\n"
-                )
+        if "au transactions" in msg:
+            txs = self._au()
+            return ChatResponse(message=f"AU transactions: {len(txs)}", data={"transactions": [t.model_dump() for t in txs[:20]]})
 
-    def handle(self, msg: str) -> ChatResponse:
-        msg = msg.lower()
+        if "ca transactions" in msg:
+            txs = self._ca()
+            return ChatResponse(message=f"CA transactions: {len(txs)}", data={"transactions": [t.model_dump() for t in txs[:20]]})
 
-        # Load CSV transactions
-        anz = self.ingestor.load_bank("anz")
-        rbc = self.ingestor.load_bank("rbc")
+        if "au p&l" in msg or "au profit" in msg:
+            txs = self._au()
+            fs = generate_financial_statements(date.today(), txs)
+            return ChatResponse(message="AU P&L", data={"profit_loss": fs.profit_loss, "banks": AU_BANKS})
 
-        # AU data
-        au_tx = anz
+        if "ca p&l" in msg or "ca profit" in msg:
+            txs = self._ca()
+            fs = generate_financial_statements(date.today(), txs)
+            return ChatResponse(message="CA P&L", data={"profit_loss": fs.profit_loss, "banks": CA_BANKS})
 
-        # CA data
-        ca_tx = rbc
+        if "au financials" in msg:
+            txs = self._au()
+            fs = generate_financial_statements(date.today(), txs)
+            return ChatResponse(message="AU Financial Statements", data=fs.model_dump())
 
-        today = date.today()
-        start = today - timedelta(days=90)
+        if "ca financials" in msg:
+            txs = self._ca()
+            fs = generate_financial_statements(date.today(), txs)
+            return ChatResponse(message="CA Financial Statements", data=fs.model_dump())
 
-        # Auto-categorise AU transactions
-        au_tx = auto_categorise(au_tx, [])
-
-        # Commands
-        if "migrate" in msg:
-            self.migrate_from_xero()
-            return ChatResponse(message="Migration from Xero completed", data=None)
+        if "quarterly bas" in msg:
+            txs = self._au()
+            fy = date.today().year if date.today().month >= 7 else date.today().year - 1
+            return ChatResponse(message=f"AU BAS — FY{fy}", data={"quarters": generate_quarterly_bas(txs, fy)})
 
         if "bas" in msg:
-            draft = generate_bas_draft(au_tx, start, today)
-            return ChatResponse(message="AU BAS draft", data=draft.model_dump())
+            txs = self._au()
+            dates = [tx.date for tx in txs]
+            start = min(dates) if dates else date(date.today().year, 7, 1)
+            bas = generate_bas_draft(txs, start, date.today())
+            return ChatResponse(message="AU BAS Draft", data=bas.model_dump())
 
-        if "au company" in msg:
-            draft = draft_au_company_tax(today.year, au_tx)
-            return ChatResponse(message="AU company tax", data=draft.model_dump())
+        if "annual hst" in msg:
+            txs = self._ca()
+            return ChatResponse(message=f"CA Annual HST {date.today().year}", data=generate_annual_hst(date.today().year, txs))
 
-        if "au personal" in msg:
-            draft = draft_au_personal_tax(today.year, au_tx)
-            return ChatResponse(message="AU personal tax", data=draft.model_dump())
+        if "gst" in msg:
+            txs = self._ca()
+            q = (date.today().month - 1) // 3 + 1
+            gst = generate_quarterly_gst(date.today().year, q, txs)
+            return ChatResponse(message=f"CA GST Q{q} {date.today().year}", data=gst.model_dump())
 
-        if "ca corporate" in msg:
-            draft = draft_ca_corporate_tax(today.year, ca_tx)
-            return ChatResponse(message="CA corporate tax", data=draft.model_dump())
+        if "au company tax" in msg:
+            txs = self._au()
+            return ChatResponse(message="AU Company Tax", data=draft_au_company_tax(date.today().year, txs).model_dump())
 
-        if "ca personal" in msg:
-            draft = draft_ca_personal_tax(today.year, ca_tx)
-            return ChatResponse(message="CA personal tax", data=draft.model_dump())
+        if "au personal tax" in msg:
+            txs = self._au()
+            return ChatResponse(message="AU Personal Tax", data=draft_au_personal_tax(date.today().year, txs).model_dump())
 
-        if "quarterly gst" in msg:
-            quarter = (today.month - 1) // 3 + 1
-            draft = generate_quarterly_gst(today.year, quarter, ca_tx)
-            return ChatResponse(message="Quarterly GST", data=draft.model_dump())
+        if "ca corporate tax" in msg:
+            txs = self._ca()
+            return ChatResponse(message="CA Corporate Tax", data=draft_ca_corporate_tax(date.today().year, txs).model_dump())
 
-        if "annual tax au personal" in msg:
-            draft = draft_au_personal_tax(today.year, au_tx)
-            return ChatResponse(message="Annual AU personal tax", data=draft.model_dump())
+        if "ca personal tax" in msg:
+            txs = self._ca()
+            return ChatResponse(message="CA Personal Tax", data=draft_ca_personal_tax(date.today().year, txs).model_dump())
 
-        if "annual tax au company" in msg:
-            draft = draft_au_company_tax(today.year, au_tx)
-            return ChatResponse(message="Annual AU company tax", data=draft.model_dump())
-
-        if "annual tax ca personal" in msg:
-            draft = draft_ca_personal_tax(today.year, ca_tx)
-            return ChatResponse(message="Annual CA personal tax", data=draft.model_dump())
-
-        if "annual tax ca company" in msg:
-            draft = draft_ca_corporate_tax(today.year, ca_tx)
-            return ChatResponse(message="Annual CA company tax", data=draft.model_dump())
-
-        if "financial statements" in msg:
-            fs = generate_financial_statements(today, au_tx + ca_tx)
-            return ChatResponse(message="Financial statements", data=fs.model_dump())
-
-        if "p&l" in msg or "profit" in msg:
-            income = sum(t.amount for t in au_tx if t.amount > 0)
-            expenses = sum(abs(t.amount) for t in au_tx if t.amount < 0)
-            return ChatResponse(
-                message="P&L summary",
-                data={"income": income, "expenses": expenses, "net": income - expenses},
-            )
-
-        return ChatResponse(message="Unknown command", data=None)
+        return ChatResponse(message=f"Unknown command: '{message}'. Type 'help' for available commands.")
