@@ -31,3 +31,6 @@ classification_rules.json
 # Vercel
 .vercel
 # deploy-trigger: 1779710410
+
+# SilverConnect platform data (local bookings, config)
+sc_data/
