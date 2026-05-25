@@ -128,3 +128,108 @@ export interface ChatResponse {
 
 export type Country = 'AU' | 'CA' | 'ALL';
 export type BankCode = 'anz' | 'nab' | 'cba' | 'westpac' | 'rbc' | 'td' | 'bmo' | 'scotiabank' | 'cibc';
+
+// ─── SilverConnect Global — Platform Fee Types ───────────────────────
+
+export interface PlatformCancellationPolicy {
+  full_refund_hours:       number;    // >= N hours notice → full refund
+  partial_refund_hours:    number;    // >= N hours notice → partial refund
+  partial_refund_rate:     number;    // fraction of gross returned (0–1)
+  no_show_refund_rate:     number;    // 0 = no refund for no-show
+  platform_fee_refundable: boolean;   // whether platform fee is refunded
+  cancellation_fee_rate:   number;    // admin fee deducted from refund
+}
+
+export interface PlatformConfig {
+  platform_name:       string;
+  platform_fee_rate:   number;        // e.g. 0.15 — from upstream system
+  provider_rate:       number;        // e.g. 0.85 — from upstream system
+  currency:            'AUD' | 'CAD' | 'CNY';
+  gst_rate:            number;
+  cancellation_policy: PlatformCancellationPolicy;
+  last_updated:        string;
+  upstream_source:     string;        // 'silverconnect-global'
+  upstream_synced:     boolean;
+}
+
+export interface FeeBreakdown {
+  gross_amount:      number;
+  platform_fee_rate: number;
+  platform_fee:      number;
+  provider_rate:     number;
+  provider_payout:   number;
+  gst_on_gross:      number;
+  gst_on_fee:        number;
+  net_fee_ex_gst:    number;
+  currency:          string;
+}
+
+export interface RefundBreakdown {
+  booking_id:          string;
+  gross_amount:        number;
+  hours_notice:        number | null;
+  refund_type:         'full' | 'partial' | 'none' | 'pending_upstream';
+  refund_rate:         number;
+  client_refund:       number;
+  cancellation_fee:    number;
+  provider_clawback:   number;
+  platform_fee_refund: number;
+  platform_retained:   number;
+  status:              'CALCULATED' | 'PENDING';
+  journal_entries:     JournalEntry[];
+}
+
+export interface JournalEntry {
+  dr:     string;
+  cr:     string;
+  amount: number;
+  note:   string;
+}
+
+export interface SCBooking {
+  booking_id:         string;
+  client_name:        string;
+  provider_id:        string;
+  provider_name:      string;
+  gross_amount:       number;
+  platform_fee:       number;
+  provider_payout:    number;
+  service_date:       string;
+  service_type:       string;
+  status:             'completed' | 'cancelled' | 'refunded' | 'pending_refund';
+  created_at:         string;
+  notes?:             string;
+  currency:           string;
+  fee_rate_applied:   number;
+  refund?:            RefundBreakdown;
+}
+
+export interface ProviderPayout {
+  provider_id:        string;
+  provider_name:      string;
+  booking_count:      number;
+  completed_count:    number;
+  cancelled_count:    number;
+  gross_total:        number;
+  platform_fee_total: number;
+  payout_gross:       number;
+  clawback_total:     number;
+  net_payout:         number;
+  currency:           string;
+}
+
+export interface PlatformPL {
+  period:                   string;
+  platform_fee_rate:        number;
+  provider_rate:            number;
+  currency:                 string;
+  total_gross_bookings:     number;
+  total_fee_revenue:        number;
+  total_provider_payouts:   number;
+  total_refunds_issued:     number;
+  total_clawbacks:          number;
+  total_cancellation_fees:  number;
+  net_platform_revenue:     number;
+  booking_counts:           { completed: number; cancelled: number; pending: number; total: number };
+  effective_fee_rate:       number;
+}
