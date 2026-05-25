@@ -348,7 +348,7 @@ export default function PHLedger() {
               <div className="row g-3 mb-4">
                 <div className="col-lg-8">
                   <div className="cs">
-                    <div className="cs-h"><h6><i className="bi bi-bar-chart me-2 text-primary"/>Income vs Expenses</h6><span className="badge bg-light text-dark">{ctry}</span></div>
+                    <div className="cs-h"><h6><i className="bi bi-bar-chart me-2 text-primary"/>Income vs Expenses</h6><span className="pill neu">{ctry}</span></div>
                     <div className="cs-b"><canvas id="chartIE" height={190}/></div>
                   </div>
                 </div>
@@ -591,7 +591,7 @@ export default function PHLedger() {
                 ))}
               </div>
               <div className="cs">
-                <div className="cs-h"><h6><i className="bi bi-bar-chart me-2"/>P&amp;L Summary</h6><span className="badge bg-light text-dark">{ctry}</span></div>
+                <div className="cs-h"><h6><i className="bi bi-bar-chart me-2"/>P&amp;L Summary</h6><span className="pill neu">{ctry}</span></div>
                 <div className="cs-b"><canvas id="chartPL" height={90}/></div>
               </div>
             </div>
@@ -600,7 +600,7 @@ export default function PHLedger() {
           {/* ── CHAT ── */}
           {pg==='chat' && (
             <div className="cs" style={{maxWidth:680}}>
-              <div className="cs-h"><h6><i className="bi bi-robot me-2 text-primary"/>PHLedger AI Assistant</h6><span className="badge bg-light text-muted" style={{fontSize:'.69rem'}}>type &#39;help&#39; for commands</span></div>
+              <div className="cs-h"><h6><i className="bi bi-robot me-2 text-primary"/>PHLedger AI Assistant</h6><span className="pill neu" style={{fontSize:'.69rem'}}>type &#39;help&#39; for commands</span></div>
               <div className="cs-b">
                 <div className="chat-box" ref={chatBox}>
                   {msgs.map((m,i)=><div key={i} className={`cb ${m.role}`}>{m.text}</div>)}
@@ -613,7 +613,7 @@ export default function PHLedger() {
                 </div>
                 <div className="mt-3 d-flex flex-wrap gap-2">
                   {['help','status','migrate','au p&l','ca p&l','bas','quarterly bas','au company tax'].map(cmd=>(
-                    <button key={cmd} className="btn btn-sm btn-outline-secondary" onClick={()=>{setCi(cmd);setTimeout(sendChat,50);}}>{cmd}</button>
+                    <button key={cmd} className="btn-x sec" onClick={()=>{setCi(cmd);setTimeout(sendChat,50);}}>{cmd}</button>
                   ))}
                 </div>
               </div>
