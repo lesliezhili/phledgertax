@@ -241,7 +241,7 @@ export default function PHLedger() {
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <link rel="preconnect" href="https://fonts.googleapis.com"/>
       </Head>
-      <Script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" strategy="beforeInteractive"/>
+      <Script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" strategy="afterInteractive"/>
 
       {/* SIDEBAR */}
       <nav className="sidebar">
