@@ -1,383 +1,574 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>PHLedger Agent</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #0b0c10;
-      color: #e5e7eb;
-      display: flex;
-      height: 100vh;
-    }
-    .sidebar {
-      width: 260px;
-      background: #05060a;
-      border-right: 1px solid #1f2933;
-      padding: 16px;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-    }
-    .sidebar h1 {
-      font-size: 18px;
-      margin: 0 0 12px;
-    }
-    .sidebar small {
-      color: #9ca3af;
-    }
-    .bank-feeds {
-      margin-top: 20px;
-    }
-    .bank-feeds h2 {
-      font-size: 14px;
-      margin: 0 0 8px;
-      color: #e5e7eb;
-    }
-    .upload-btn {
-      background: #374151;
-      border: 1px solid #4b5563;
-      color: #e5e7eb;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      margin-right: 4px;
-      margin-bottom: 4px;
-    }
-    .upload-btn:hover {
-      background: #4b5563;
-    }
-    .drop-zone {
-      border: 2px dashed #4b5563;
-      border-radius: 6px;
-      padding: 10px;
-      text-align: center;
-      color: #9ca3af;
-      font-size: 12px;
-      margin-top: 8px;
-      cursor: pointer;
-    }
-    .drop-zone.dragover {
-      border-color: #4f46e5;
-      background: #1f2933;
-    }
-    .main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .chat-window {
-      flex: 1;
-      padding: 16px 24px;
-      overflow-y: auto;
-    }
-    .message {
-      max-width: 720px;
-      margin-bottom: 16px;
-      padding: 12px 14px;
-      border-radius: 10px;
-      line-height: 1.4;
-      white-space: pre-wrap;
-    }
-    .user {
-      background: #1f2933;
-      align-self: flex-end;
-    }
-    .agent {
-      background: #111827;
-      border: 1px solid #1f2933;
-      align-self: flex-start;
-    }
-    .input-bar {
-      border-top: 1px solid #1f2933;
-      padding: 12px 16px;
-      display: flex;
-      gap: 8px;
-      box-sizing: border-box;
-    }
-    .input-bar textarea {
-      flex: 1;
-      resize: none;
-      border-radius: 8px;
-      border: 1px solid #374151;
-      background: #020617;
-      color: #e5e7eb;
-      padding: 8px 10px;
-      font-family: inherit;
-      font-size: 14px;
-      min-height: 48px;
-      max-height: 120px;
-    }
-    .input-bar button {
-      background: #4f46e5;
-      border: none;
-      color: white;
-      padding: 0 16px;
-      border-radius: 8px;
-      font-size: 14px;
-      cursor: pointer;
-      min-width: 80px;
-    }
-    .input-bar button:disabled {
-      opacity: 0.6;
-      cursor: default;
-    }
-    .hint {
-      font-size: 12px;
-      color: #9ca3af;
-      margin-top: 8px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHLedger — Free Bookkeeping for AU &amp; CA</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.10/dist/cdn.min.js"></script>
+<style>
+:root{--sb:#1C2B3A;--sbw:240px;--pr:#0C8599;--au:#00863A;--ca:#C8102E;--bg:#F0F4F8;--card:#fff;--mu:#6B7280;--bd:#E5E7EB}
+*{font-family:'Inter',sans-serif}body{background:var(--bg);margin:0}
+.sidebar{width:var(--sbw);min-height:100vh;background:var(--sb);position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:100;box-shadow:2px 0 8px rgba(0,0,0,.15)}
+.sb-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-logo .brand{font-size:1.3rem;font-weight:700;color:#fff}.sb-logo .brand span{color:#4DD9EC}
+.sb-logo .tag{font-size:.7rem;color:rgba(255,255,255,.35);margin-top:2px}
+.nav-lbl{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.28);padding:14px 20px 5px;font-weight:600}
+.sb-nav a{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,.65);text-decoration:none;font-size:.85rem;font-weight:500;border-left:3px solid transparent;transition:all .15s}
+.sb-nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+.sb-nav a.active{color:#4DD9EC;border-left-color:#4DD9EC;background:rgba(77,217,236,.08)}
+.sb-nav a i{font-size:1rem;width:18px}
+.sb-bot{margin-top:auto;padding:14px 20px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-badge{font-size:.68rem;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.45)}
+.main{margin-left:var(--sbw);min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#fff;padding:13px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:50}
+.topbar-t{font-size:1.05rem;font-weight:600;color:#111827}.topbar-s{font-size:.78rem;color:var(--mu)}
+.ct-btn{font-size:.78rem;font-weight:600}.ct-au{background:var(--au)!important;color:#fff!important;border-color:var(--au)!important}.ct-ca{background:var(--ca)!important;color:#fff!important;border-color:var(--ca)!important}.ct-all{background:var(--pr)!important;color:#fff!important;border-color:var(--pr)!important}
+.pb{padding:22px 28px;flex:1}
+.kpi{background:var(--card);border-radius:12px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid var(--bd);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:12px 0 0 12px}
+.kpi.inc::before{background:var(--au)}.kpi.exp::before{background:#EF4444}.kpi.net::before{background:var(--pr)}.kpi.cnt::before{background:#F59E0B}
+.kpi .lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);font-weight:600;margin-bottom:7px}
+.kpi .val{font-size:1.7rem;font-weight:700;color:#111827;line-height:1}
+.kpi .sub{font-size:.8rem;color:var(--mu);margin-top:4px}
+.kpi .ico{position:absolute;top:16px;right:16px;font-size:1.5rem;opacity:.1}
+.cs{background:var(--card);border-radius:12px;border:1px solid var(--bd);box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+.cs-h{padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.cs-h h6{margin:0;font-weight:600;font-size:.88rem;color:#111827}
+.cs-b{padding:18px}
+.tx-tbl{font-size:.82rem}.tx-tbl th{font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:var(--mu);font-weight:600;background:#F9FAFB;border-bottom:2px solid var(--bd)}
+.tx-tbl td{vertical-align:middle;border-color:var(--bd)}
+.pos{color:var(--au);font-weight:600}.neg{color:#EF4444;font-weight:600}
+.uz{border:2px dashed var(--bd);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFAFA}
+.uz:hover,.uz.over{border-color:var(--pr);background:rgba(12,133,153,.04)}
+.uz i{font-size:2.2rem;color:var(--pr);opacity:.65}
+.chat-box{height:300px;overflow-y:auto;padding:14px;background:#F9FAFB;border-radius:8px;border:1px solid var(--bd)}
+.cb{padding:9px 13px;border-radius:12px;margin-bottom:7px;font-size:.84rem;max-width:82%}
+.cb.user{background:var(--pr);color:#fff;margin-left:auto;border-radius:12px 12px 2px 12px}
+.cb.bot{background:#fff;color:#111827;border:1px solid var(--bd);border-radius:12px 12px 12px 2px}
+.rm{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bd);font-size:.85rem}
+.rm:last-child{border-bottom:none}.rm .rl{color:var(--mu)}.rm .rv{font-weight:600}
+.toast-wrap{position:fixed;bottom:22px;right:22px;z-index:9999}
+</style>
 </head>
-<body>
-  <div class="sidebar">
-    <h1>PHLedger</h1>
-    <small>Local accounting agent</small>
-    <div class="bank-feeds">
-      <h2>Bank Feeds</h2>
-      <button class="upload-btn" id="upload-anz">Upload ANZ CSV</button>
-      <button class="upload-btn" id="upload-rbc">Upload RBC CSV</button>
-      <button class="upload-btn" id="download-anz">Auto-Download ANZ</button>
-      <button class="upload-btn" id="download-rbc">Auto-Download RBC</button>
-      <button class="upload-btn" id="view-tx">View Transactions</button>
-      <button class="upload-btn" id="view-analytics">View Analytics</button>
-      <div class="drop-zone" id="drop-zone">Drop CSV here or click to browse</div>
+<body x-data="app()" x-init="init()">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="brand">PH<span>Ledger</span></div>
+    <div class="tag">Free bookkeeping &middot; AU &amp; CA</div>
+  </div>
+  <div class="sb-nav mt-1">
+    <div class="nav-lbl">Main</div>
+    <a href="#" :class="{active:pg==='dash'}" @click.prevent="go('dash')"><i class="bi bi-grid-1x2-fill"></i>Dashboard</a>
+    <a href="#" :class="{active:pg==='tx'}" @click.prevent="go('tx');loadTx()"><i class="bi bi-list-ul"></i>Transactions</a>
+    <a href="#" :class="{active:pg==='bank'}" @click.prevent="go('bank')"><i class="bi bi-bank2"></i>Banking</a>
+    <div class="nav-lbl">Reports</div>
+    <a href="#" :class="{active:pg==='bas'}" @click.prevent="go('bas');loadBAS()"><i class="bi bi-file-earmark-text"></i>BAS / GST</a>
+    <a href="#" :class="{active:pg==='tax'}" @click.prevent="go('tax');loadTax()"><i class="bi bi-receipt"></i>Tax Estimates</a>
+    <a href="#" :class="{active:pg==='fin'}" @click.prevent="go('fin');loadFin()"><i class="bi bi-bar-chart-line"></i>Financials</a>
+    <div class="nav-lbl">Tools</div>
+    <a href="#" :class="{active:pg==='chat'}" @click.prevent="go('chat')"><i class="bi bi-chat-dots"></i>AI Assistant</a>
+    <a href="#" :class="{active:pg==='mig'}" @click.prevent="go('mig')"><i class="bi bi-arrow-repeat"></i>Migration</a>
+  </div>
+  <div class="sb-bot">
+    <div class="d-flex gap-2 flex-wrap">
+      <span class="sb-badge" x-text="health.backend||'csv'"></span>
+      <span class="sb-badge" :style="health.status==='ok'?'color:#4DD9EC':'color:#EF4444'" x-text="health.status==='ok'?'● online':'○ offline'"></span>
     </div>
-    <div style="margin-top:16px;font-size:12px;color:#9ca3af;">
-      Try prompts like:
-      <ul>
-        <li>migrate</li>
-        <li>draft BAS for AU company</li>
-        <li>annual tax au personal</li>
-        <li>annual tax au company</li>
-        <li>annual tax ca personal</li>
-        <li>annual tax ca company</li>
-        <li>quarterly gst</li>
-        <li>financial statements</li>
-        <li>show P&L summary</li>
-      </ul>
+    <div style="font-size:.68rem;color:rgba(255,255,255,.25);margin-top:6px">v<span x-text="health.version||'2.0.0'"></span> &mdash; PHLedger</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-t" x-text="titles[pg]||'PHLedger'"></div>
+      <div class="topbar-s" x-text="subs[pg]||''"></div>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-outline-secondary ct-btn" :class="{'ct-au':ctry==='AU'}" @click="ctry='AU';refresh()">&#127462;&#127482; AU</button>
+        <button class="btn btn-outline-secondary ct-btn" :class="{'ct-ca':ctry==='CA'}" @click="ctry='CA';refresh()">&#127464;&#127462; CA</button>
+        <button class="btn btn-outline-secondary ct-btn" :class="{'ct-all':ctry==='ALL'}" @click="ctry='ALL';refresh()">ALL</button>
+      </div>
+      <button class="btn btn-sm" style="background:var(--pr);color:#fff" @click="go('bank')"><i class="bi bi-upload me-1"></i>Upload CSV</button>
     </div>
   </div>
-  <div class="main">
-    <div id="chat" class="chat-window"></div>
-    <div class="input-bar">
-      <textarea id="input" placeholder="Ask PHLedger about BAS, tax, or P&L..."></textarea>
-      <button id="send">Send</button>
+
+  <!-- PAGE BODY -->
+  <div class="pb">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div x-show="pg==='dash'">
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-3"><div class="kpi inc"><i class="bi bi-arrow-up-circle ico"></i><div class="lbl">Total Income</div><div class="val" x-text="fmt(an.total_income)"></div><div class="sub" x-text="ctry!=='ALL'?ctry:'Combined'"></div></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi exp"><i class="bi bi-arrow-down-circle ico"></i><div class="lbl">Total Expenses</div><div class="val" x-text="fmt(an.total_expenses)"></div><div class="sub" x-text="ctry!=='ALL'?ctry:'Combined'"></div></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi net"><i class="bi bi-graph-up ico"></i><div class="lbl">Net Profit</div><div class="val" :class="(an.net||0)>=0?'pos':'neg'" x-text="fmt(an.net)"></div><div class="sub">Before tax</div></div></div>
+        <div class="col-6 col-xl-3"><div class="kpi cnt"><i class="bi bi-receipt-cutoff ico"></i><div class="lbl">Transactions</div><div class="val" x-text="(an.total_transactions||0).toLocaleString()"></div><div class="sub">All time</div></div></div>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+          <div class="cs">
+            <div class="cs-h"><h6><i class="bi bi-bar-chart me-2 text-primary"></i>Income vs Expenses</h6><span class="badge bg-light text-dark" x-text="ctry"></span></div>
+            <div class="cs-b"><canvas id="chartIE" height="190"></canvas></div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="cs h-100">
+            <div class="cs-h"><h6><i class="bi bi-pie-chart me-2 text-warning"></i>Expense Categories</h6></div>
+            <div class="cs-b d-flex justify-content-center align-items-center"><div style="width:195px"><canvas id="chartCat"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cs">
+        <div class="cs-h"><h6><i class="bi bi-clock-history me-2"></i>Recent Transactions</h6><a href="#" class="text-primary" style="font-size:.8rem" @click.prevent="go('tx');loadTx()">View all &rarr;</a></div>
+        <div class="cs-b p-0">
+          <table class="table tx-tbl mb-0">
+            <thead><tr><th class="ps-3">Date</th><th>Description</th><th>Bank</th><th>Category</th><th class="pe-3 text-end">Amount</th></tr></thead>
+            <tbody>
+              <template x-for="t in txs.slice(0,8)" :key="t.id">
+                <tr>
+                  <td class="ps-3 text-muted" x-text="t.date"></td>
+                  <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="t.description"></td>
+                  <td><span class="badge rounded-pill bg-light text-dark text-uppercase" style="font-size:.67rem" x-text="t.bank||'—'"></span></td>
+                  <td><span :style="catStyle(t.account_code)" x-text="t.category||'—'"></span></td>
+                  <td class="pe-3 text-end" :class="t.amount>0?'pos':'neg'" x-text="(t.amount>0?'+':'')+fmt(t.amount)"></td>
+                </tr>
+              </template>
+              <tr x-show="!txs.length"><td colspan="5" class="text-center text-muted py-4" style="font-size:.85rem">No transactions — upload a CSV to get started</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
+
+    <!-- ═══ TRANSACTIONS ═══ -->
+    <div x-show="pg==='tx'">
+      <div class="cs">
+        <div class="cs-h">
+          <h6>All Transactions (<span x-text="filtTx().length"></span>)</h6>
+          <div class="d-flex gap-2">
+            <input class="form-control form-control-sm" placeholder="Search..." x-model="srch" style="width:170px">
+            <select class="form-select form-select-sm" x-model="bnkF" style="width:130px">
+              <option value="">All Banks</option>
+              <option value="anz">ANZ</option><option value="nab">NAB</option><option value="cba">CBA</option><option value="westpac">Westpac</option>
+              <option value="rbc">RBC</option><option value="td">TD</option><option value="bmo">BMO</option><option value="scotiabank">Scotiabank</option><option value="cibc">CIBC</option>
+            </select>
+          </div>
+        </div>
+        <div class="cs-b p-0">
+          <table class="table tx-tbl mb-0">
+            <thead><tr><th class="ps-3">Date</th><th>Description</th><th>Bank</th><th>Category</th><th>Code</th><th>Tax</th><th class="pe-3 text-end">Amount</th></tr></thead>
+            <tbody>
+              <template x-for="t in filtTx()" :key="t.id">
+                <tr>
+                  <td class="ps-3 text-muted" x-text="t.date"></td>
+                  <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" x-text="t.description"></td>
+                  <td><span class="badge rounded-pill bg-light text-dark text-uppercase" style="font-size:.67rem" x-text="t.bank||'—'"></span></td>
+                  <td><span :style="catStyle(t.account_code)" x-text="t.category||'—'"></span></td>
+                  <td class="text-muted" x-text="t.account_code||''"></td>
+                  <td class="text-muted" style="font-size:.75rem" x-text="t.tax_code||''"></td>
+                  <td class="pe-3 text-end" :class="t.amount>0?'pos':'neg'" x-text="(t.amount>0?'+':'')+fmt(t.amount)"></td>
+                </tr>
+              </template>
+              <tr x-show="!filtTx().length"><td colspan="7" class="text-center text-muted py-4">No transactions match your filter</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BANKING ═══ -->
+    <div x-show="pg==='bank'">
+      <div class="row g-4 mb-4">
+        <div class="col-md-6">
+          <div class="cs">
+            <div class="cs-h" style="border-left:4px solid var(--au)"><h6>&#127462;&#127482; Australian Banks — Upload CSV</h6></div>
+            <div class="cs-b">
+              <select class="form-select form-select-sm mb-3" x-model="bkAU">
+                <option value="anz">ANZ</option><option value="nab">NAB</option><option value="cba">Commonwealth Bank</option><option value="westpac">Westpac</option>
+              </select>
+              <div class="uz" :class="{over:dAU}" @dragover.prevent="dAU=true" @dragleave="dAU=false" @drop.prevent="drop($event,'AU')" @click="$refs.fAU.click()">
+                <i class="bi bi-cloud-upload d-block mb-2"></i>
+                <div class="fw-semibold" style="font-size:.88rem">Drag &amp; drop or click to browse</div>
+                <div class="text-muted mt-1" style="font-size:.76rem">ANZ, NAB, CBA, Westpac CSV export formats</div>
+                <input type="file" x-ref="fAU" class="d-none" accept=".csv" @change="upload($event,bkAU,'AU')">
+              </div>
+              <div x-show="rAU" class="mt-3 p-3 rounded" style="background:#F0FDF4;border:1px solid #BBF7D0;font-size:.8rem"><i class="bi bi-check-circle-fill text-success me-1"></i><span x-text="rAU"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="cs">
+            <div class="cs-h" style="border-left:4px solid var(--ca)"><h6>&#127464;&#127462; Canadian Banks — Upload CSV</h6></div>
+            <div class="cs-b">
+              <select class="form-select form-select-sm mb-3" x-model="bkCA">
+                <option value="rbc">RBC Royal Bank</option><option value="td">TD Bank</option><option value="bmo">BMO</option><option value="scotiabank">Scotiabank</option><option value="cibc">CIBC</option>
+              </select>
+              <div class="uz" :class="{over:dCA}" @dragover.prevent="dCA=true" @dragleave="dCA=false" @drop.prevent="drop($event,'CA')" @click="$refs.fCA.click()">
+                <i class="bi bi-cloud-upload d-block mb-2"></i>
+                <div class="fw-semibold" style="font-size:.88rem">Drag &amp; drop or click to browse</div>
+                <div class="text-muted mt-1" style="font-size:.76rem">RBC, TD, BMO, Scotiabank, CIBC CSV export formats</div>
+                <input type="file" x-ref="fCA" class="d-none" accept=".csv" @change="upload($event,bkCA,'CA')">
+              </div>
+              <div x-show="rCA" class="mt-3 p-3 rounded" style="background:#FFF1F2;border:1px solid #FECDD3;font-size:.8rem"><i class="bi bi-check-circle-fill me-1" style="color:var(--ca)"></i><span x-text="rCA"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cs">
+        <div class="cs-h"><h6><i class="bi bi-info-circle me-2 text-primary"></i>How to Export CSV from Your Bank</h6></div>
+        <div class="cs-b">
+          <div class="row g-3" style="font-size:.82rem">
+            <div class="col-md-6"><strong>&#127462;&#127482; ANZ:</strong> Internet Banking &rarr; Account &rarr; Transactions &rarr; Export &rarr; CSV</div>
+            <div class="col-md-6"><strong>&#127462;&#127482; NAB:</strong> NAB Connect &rarr; Transactions &rarr; Download &rarr; CSV</div>
+            <div class="col-md-6"><strong>&#127462;&#127482; CBA:</strong> NetBank &rarr; View Transactions &rarr; Export &rarr; CSV</div>
+            <div class="col-md-6"><strong>&#127462;&#127482; Westpac:</strong> Online Banking &rarr; Account Activity &rarr; Export &rarr; CSV</div>
+            <div class="col-md-6"><strong>&#127464;&#127462; RBC:</strong> Online Banking &rarr; Account &rarr; Download Transactions &rarr; CSV</div>
+            <div class="col-md-6"><strong>&#127464;&#127462; TD:</strong> EasyWeb &rarr; Accounts &rarr; Download &rarr; Spreadsheet (CSV)</div>
+            <div class="col-md-6"><strong>&#127464;&#127462; BMO:</strong> Online Banking &rarr; Accounts &rarr; Download Transactions &rarr; CSV</div>
+            <div class="col-md-6"><strong>&#127464;&#127462; Scotiabank:</strong> Scotia OnLine &rarr; Account Activity &rarr; Download &rarr; CSV</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BAS / GST ═══ -->
+    <div x-show="pg==='bas'">
+      <div class="row g-4">
+        <div class="col-md-6" x-show="ctry!=='CA'">
+          <div class="cs">
+            <div class="cs-h" style="border-left:4px solid var(--au)">
+              <h6>&#127462;&#127482; AU — BAS Draft</h6>
+              <span class="badge bg-light text-dark" style="font-size:.7rem" x-text="(bas.period_start||'..')+' &rarr; '+(bas.period_end||'..')" x-html="(bas.period_start||'..')+' &rarr; '+(bas.period_end||'..')" ></span>
+            </div>
+            <div class="cs-b">
+              <div class="rm"><span class="rl">G1 &mdash; Total Sales (ATO label)</span><span class="rv pos" x-text="'$'+fmt(bas.g1_total_sales)"></span></div>
+              <div class="rm"><span class="rl">G11 &mdash; Non-Capital Purchases</span><span class="rv neg" x-text="'$'+fmt(bas.g11_non_capital_purchases)"></span></div>
+              <div class="rm"><span class="rl">1A &mdash; GST on Sales</span><span class="rv" x-text="'$'+fmt(bas.gst_on_sales_1a)"></span></div>
+              <div class="rm"><span class="rl">1B &mdash; GST on Purchases (credit)</span><span class="rv" x-text="'$'+fmt(bas.gst_on_purchases_1b)"></span></div>
+              <div class="rm" style="border-top:2px solid var(--bd);padding-top:12px;margin-top:4px">
+                <span class="rl fw-semibold" style="color:#111">Net GST Payable to ATO</span>
+                <span class="fw-bold fs-5" :class="(bas.net_gst_payable||0)>0?'neg':'pos'" x-text="'$'+fmt(bas.net_gst_payable)"></span>
+              </div>
+              <div class="mt-3 text-muted" style="font-size:.76rem">&#128204; Quarterly BAS due: 28 Oct &bull; 28 Feb &bull; 28 Apr &bull; 28 Jul</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6" x-show="ctry!=='AU'">
+          <div class="cs">
+            <div class="cs-h" style="border-left:4px solid var(--ca)"><h6>&#127464;&#127462; CA &mdash; GST/HST Quarterly</h6></div>
+            <div class="cs-b">
+              <template x-for="q in gst" :key="q.quarter">
+                <div class="rm">
+                  <span class="rl">Q<span x-text="q.quarter"></span> <span x-text="q.year"></span></span>
+                  <span class="d-flex gap-2" style="font-size:.82rem">
+                    <span class="text-success" x-text="'Coll: $'+fmt(q.gst_collected)"></span>
+                    <span class="text-danger" x-text="'Paid: $'+fmt(q.gst_paid)"></span>
+                    <span class="fw-semibold" :class="(q.net_gst||0)>0?'neg':'pos'" x-text="'Net: $'+fmt(q.net_gst)"></span>
+                  </span>
+                </div>
+              </template>
+              <div x-show="!gst.length" class="text-muted text-center py-3" style="font-size:.84rem">No CA transactions loaded</div>
+              <div class="mt-3 text-muted" style="font-size:.76rem">&#128204; CRA GST/HST due: Apr 30 &bull; Jul 31 &bull; Oct 31 &bull; Jan 31</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12" x-show="ctry!=='CA'">
+          <div class="cs">
+            <div class="cs-h"><h6>&#127462;&#127482; Quarterly BAS &mdash; FY<span x-text="fy()"></span></h6></div>
+            <div class="cs-b"><canvas id="chartBAS" height="100"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAX ═══ -->
+    <div x-show="pg==='tax'">
+      <div class="row g-4">
+        <div class="col-md-6" x-show="ctry!=='CA'">
+          <div class="cs mb-3">
+            <div class="cs-h" style="border-left:4px solid var(--au)"><h6>&#127462;&#127482; AU Company Tax &mdash; 25% SBD Rate</h6></div>
+            <div class="cs-b">
+              <div class="rm"><span class="rl">Taxable Income</span><span class="rv" x-text="'$'+fmt(taxAU.co?.taxable_income)"></span></div>
+              <div class="rm"><span class="rl fw-semibold" style="color:#111">Tax Payable</span><span class="rv neg fw-bold" x-text="'$'+fmt(taxAU.co?.tax_payable)"></span></div>
+              <div class="mt-2 text-muted" style="font-size:.76rem" x-text="(taxAU.co?.notes||[]).join(' · ')"></div>
+            </div>
+          </div>
+          <div class="cs">
+            <div class="cs-h" style="border-left:4px solid #059669"><h6>&#127462;&#127482; AU Personal Tax &mdash; 2024-25 Stage 3</h6></div>
+            <div class="cs-b">
+              <div class="rm"><span class="rl">Taxable Income</span><span class="rv" x-text="'$'+fmt(taxAU.pe?.taxable_income)"></span></div>
+              <div class="rm"><span class="rl">Income Tax</span><span class="rv neg" x-text="'$'+fmt(taxAU.pe?.tax_payable)"></span></div>
+              <div class="rm"><span class="rl">Medicare Levy (2%)</span><span class="rv neg" x-text="'$'+fmt(taxAU.pe?.medicare_levy)"></span></div>
+              <div class="rm"><span class="rl fw-semibold" style="color:#111">Total Liability</span><span class="rv neg fw-bold" x-text="'$'+fmt((taxAU.pe?.tax_payable||0)+(taxAU.pe?.medicare_levy||0))"></span></div>
+              <div class="mt-2 text-muted" style="font-size:.76rem" x-text="(taxAU.pe?.notes||[]).join(' · ')"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6" x-show="ctry!=='AU'">
+          <div class="cs mb-3">
+            <div class="cs-h" style="border-left:4px solid var(--ca)"><h6>&#127464;&#127462; CA Corporate Tax &mdash; 9% SBD Federal</h6></div>
+            <div class="cs-b">
+              <div class="rm"><span class="rl">Taxable Income</span><span class="rv" x-text="'$'+fmt(taxCA.co?.taxable_income)"></span></div>
+              <div class="rm"><span class="rl">Federal Tax (9%)</span><span class="rv" x-text="'$'+fmt(taxCA.co?.federal_tax)"></span></div>
+              <div class="rm"><span class="rl">Provincial Tax (~8%)</span><span class="rv" x-text="'$'+fmt(taxCA.co?.provincial_tax)"></span></div>
+              <div class="rm"><span class="rl fw-semibold" style="color:#111">Total Tax</span><span class="rv neg fw-bold" x-text="'$'+fmt(taxCA.co?.total_tax)"></span></div>
+              <div class="mt-2 text-muted" style="font-size:.76rem" x-text="(taxCA.co?.notes||[]).join(' · ')"></div>
+            </div>
+          </div>
+          <div class="cs">
+            <div class="cs-h" style="border-left:4px solid #DC2626"><h6>&#127464;&#127462; CA Personal Tax &mdash; 2024 Brackets + BPA</h6></div>
+            <div class="cs-b">
+              <div class="rm"><span class="rl">Taxable Income</span><span class="rv" x-text="'$'+fmt(taxCA.pe?.taxable_income)"></span></div>
+              <div class="rm"><span class="rl">Federal Tax</span><span class="rv neg" x-text="'$'+fmt(taxCA.pe?.federal_tax)"></span></div>
+              <div class="rm"><span class="rl">Provincial Tax</span><span class="rv neg" x-text="'$'+fmt(taxCA.pe?.provincial_tax)"></span></div>
+              <div class="rm"><span class="rl fw-semibold" style="color:#111">Total Tax</span><span class="rv neg fw-bold" x-text="'$'+fmt(taxCA.pe?.total_tax)"></span></div>
+              <div class="mt-2 text-muted" style="font-size:.76rem" x-text="(taxCA.pe?.notes||[]).join(' · ')"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ FINANCIALS ═══ -->
+    <div x-show="pg==='fin'">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="cs">
+            <div class="cs-h"><h6><i class="bi bi-graph-up-arrow me-2 text-success"></i>Profit &amp; Loss</h6></div>
+            <div class="cs-b">
+              <div class="rm"><span class="rl">Revenue</span><span class="rv pos" x-text="'$'+fmt(fin.profit_loss?.revenue)"></span></div>
+              <div class="rm"><span class="rl">Expenses</span><span class="rv neg" x-text="'$'+fmt(fin.profit_loss?.expenses)"></span></div>
+              <div class="rm"><span class="rl fw-semibold" style="color:#111">Net Income</span><span class="rv fw-bold" :class="(fin.profit_loss?.net_income||0)>=0?'pos':'neg'" x-text="'$'+fmt(fin.profit_loss?.net_income)"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="cs">
+            <div class="cs-h"><h6><i class="bi bi-building me-2 text-primary"></i>Balance Sheet</h6></div>
+            <div class="cs-b">
+              <div class="rm"><span class="rl">Cash at Bank</span><span class="rv" x-text="'$'+fmt(fin.balance_sheet?.assets?.cash)"></span></div>
+              <div class="rm"><span class="rl">Total Liabilities</span><span class="rv text-muted">$0.00</span></div>
+              <div class="rm"><span class="rl fw-semibold" style="color:#111">Retained Earnings</span><span class="rv fw-bold" :class="(fin.balance_sheet?.equity?.retained_earnings||0)>=0?'pos':'neg'" x-text="'$'+fmt(fin.balance_sheet?.equity?.retained_earnings)"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="cs">
+            <div class="cs-h"><h6><i class="bi bi-cash-stack me-2 text-warning"></i>Cash Flow</h6></div>
+            <div class="cs-b">
+              <div class="rm"><span class="rl">Operating</span><span class="rv" :class="(fin.cash_flow?.operating||0)>=0?'pos':'neg'" x-text="'$'+fmt(fin.cash_flow?.operating)"></span></div>
+              <div class="rm"><span class="rl">Investing</span><span class="rv text-muted">$0.00</span></div>
+              <div class="rm"><span class="rl">Financing</span><span class="rv text-muted">$0.00</span></div>
+              <div class="rm"><span class="rl fw-semibold" style="color:#111">Net Change</span><span class="rv fw-bold" :class="(fin.cash_flow?.net_change||0)>=0?'pos':'neg'" x-text="'$'+fmt(fin.cash_flow?.net_change)"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="cs">
+            <div class="cs-h"><h6><i class="bi bi-bar-chart me-2"></i>P&amp;L Summary</h6><span class="badge bg-light text-dark" x-text="ctry"></span></div>
+            <div class="cs-b"><canvas id="chartPL" height="90"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CHAT ═══ -->
+    <div x-show="pg==='chat'">
+      <div class="cs" style="max-width:680px">
+        <div class="cs-h">
+          <h6><i class="bi bi-robot me-2 text-primary"></i>PHLedger AI Assistant</h6>
+          <span class="badge bg-light text-muted" style="font-size:.69rem">type 'help' for all commands</span>
+        </div>
+        <div class="cs-b">
+          <div class="chat-box" x-ref="cbox">
+            <template x-for="(m,i) in msgs" :key="i">
+              <div class="cb" :class="m.r" x-text="m.t" style="white-space:pre-line"></div>
+            </template>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <input class="form-control" placeholder="Ask about your finances — try 'au p&l', 'bas', 'status', 'help'" x-model="ci" @keydown.enter="chat()">
+            <button class="btn px-3" style="background:var(--pr);color:#fff" @click="chat()" :disabled="cl">
+              <span x-show="!cl"><i class="bi bi-send-fill"></i></span>
+              <span x-show="cl"><span class="spinner-border" style="width:1rem;height:1rem"></span></span>
+            </button>
+          </div>
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <button class="btn btn-sm btn-outline-secondary" @click="ci='help';chat()">help</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="ci='status';chat()">status</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="ci='au p&l';chat()">&#127462;&#127482; p&amp;l</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="ci='ca p&l';chat()">&#127464;&#127462; p&amp;l</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="ci='bas';chat()">bas</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="ci='quarterly bas';chat()">quarterly bas</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="ci='annual hst';chat()">annual hst</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="ci='au company tax';chat()">au tax</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MIGRATION ═══ -->
+    <div x-show="pg==='mig'">
+      <div class="cs" style="max-width:600px">
+        <div class="cs-h"><h6><i class="bi bi-arrow-repeat me-2 text-primary"></i>Historical Data Migration</h6></div>
+        <div class="cs-b">
+          <p class="text-muted" style="font-size:.875rem">Ingest all historical CSVs from <code>bank_data/</code>, auto-categorise, and generate summary reports (ledger, monthly, yearly, BAS history).</p>
+          <div class="d-flex gap-2 mb-3 flex-wrap">
+            <button class="btn btn-sm" style="background:var(--pr);color:#fff" @click="mig(false)" :disabled="migR">
+              <span x-show="!migR"><i class="bi bi-play-fill me-1"></i>Run Migration</span>
+              <span x-show="migR"><span class="spinner-border" style="width:.85rem;height:.85rem" ></span> Running...</span>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" @click="mig(true)" :disabled="migR">Reset &amp; Rerun</button>
+            <button class="btn btn-sm btn-outline-secondary" @click="migStatus()"><i class="bi bi-info-circle me-1"></i>Status</button>
+          </div>
+          <div x-show="migD" class="p-3 rounded" style="background:#F0FDF4;border:1px solid #BBF7D0;font-size:.82rem">
+            <strong><i class="bi bi-check-circle-fill text-success me-1"></i>Migration complete</strong>
+            <div class="mt-2 row g-1">
+              <div class="col-6">Total transactions: <strong x-text="migD?.total_transactions"></strong></div>
+              <div class="col-6">Date range: <strong x-text="(migD?.date_range?.from||'?')+' &rarr; '+(migD?.date_range?.to||'?')" x-html="(migD?.date_range?.from||'?')+' &rarr; '+(migD?.date_range?.to||'?')"></strong></div>
+              <div class="col-12">AU income: <strong x-text="'$'+fmt(migD?.total_income_aud)"></strong> &nbsp; AU expenses: <strong class="neg" x-text="'$'+fmt(migD?.total_expenses_aud)"></strong></div>
+              <div class="col-12">CA income: <strong x-text="'$'+fmt(migD?.total_income_cad)"></strong> &nbsp; CA expenses: <strong class="neg" x-text="'$'+fmt(migD?.total_expenses_cad)"></strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
+</div>
 
-  <script>
-    const chatEl = document.getElementById("chat");
-    const inputEl = document.getElementById("input");
-    const sendEl = document.getElementById("send");
-    const uploadAnzEl = document.getElementById("upload-anz");
-    const uploadRbcEl = document.getElementById("upload-rbc");
-    const downloadAnzEl = document.getElementById("download-anz");
-    const downloadRbcEl = document.getElementById("download-rbc");
-    const viewTxEl = document.getElementById("view-tx");
-    const viewAnalyticsEl = document.getElementById("view-analytics");
-    const dropZoneEl = document.getElementById("drop-zone");
+<!-- TOAST -->
+<div class="toast-wrap">
+  <div x-show="ts.on" x-transition class="toast show" :class="'text-bg-'+ts.ty" style="min-width:260px">
+    <div class="d-flex"><div class="toast-body" x-text="ts.msg"></div><button class="btn-close me-2 m-auto" :class="ts.ty==='light'?'':' btn-close-white'" @click="ts.on=false"></button></div>
+  </div>
+</div>
 
-    function addMessage(text, role) {
-      const div = document.createElement("div");
-      div.className = "message " + role;
-      div.textContent = text;
-      chatEl.appendChild(div);
-      chatEl.scrollTop = chatEl.scrollHeight;
-    }
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function app(){return{
+  pg:'dash',ctry:'ALL',
+  health:{},an:{},txs:[],srch:'',bnkF:'',
+  bas:{},gst:[],taxAU:{co:null,pe:null},taxCA:{co:null,pe:null},fin:{},
+  msgs:[{r:'bot',t:'👋 Hi! I am your PHLedger assistant.\nType help to see all commands, or click a quick-action button below.'}],
+  ci:'',cl:false,
+  bkAU:'anz',bkCA:'rbc',dAU:false,dCA:false,rAU:'',rCA:'',
+  migD:null,migR:false,
+  ts:{on:false,msg:'',ty:'success'},
+  ch:{},
+  titles:{dash:'Dashboard',tx:'Transactions',bank:'Banking',bas:'BAS & GST Reports',tax:'Tax Estimates',fin:'Financial Statements',chat:'AI Assistant',mig:'Migration'},
+  subs:{dash:'Financial overview',tx:'All imported bank transactions',bank:'Upload bank CSV exports',bas:'AU BAS & CA GST/HST',tax:'AU & CA tax estimates',fin:'P&L, Balance Sheet, Cash Flow',chat:'Ask questions about your finances',mig:'Import historical data'},
 
-    async function sendMessage() {
-      const text = inputEl.value.trim();
-      if (!text) return;
-      addMessage(text, "user");
-      inputEl.value = "";
-      sendEl.disabled = true;
+  async init(){
+    try{this.health=await this.api('/health')}catch{}
+    await this.loadTx();
+    await this.loadAn();
+    this.$nextTick(()=>{this.drawIE();this.drawCat()});
+  },
 
-      try {
-        const res = await fetch("/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text })
-        });
-        if (!res.ok) {
-          addMessage("Error: " + res.status + " " + res.statusText, "agent");
-        } else {
-          const data = await res.json();
-          let msg = data.message || "";
-          if (data.data) {
-            msg += "\n\n" + JSON.stringify(data.data, null, 2);
-          }
-          addMessage(msg, "agent");
-        }
-      } catch (e) {
-        addMessage("Network error: " + e.message, "agent");
-      } finally {
-        sendEl.disabled = false;
-        inputEl.focus();
-      }
-    }
+  async loadAn(){const q=this.ctry!=='ALL'?'?country='+this.ctry:'';try{this.an=await this.api('/analytics'+q)}catch{}},
+  async loadTx(){const q=this.ctry!=='ALL'?'?country='+this.ctry+'&limit=500':'?limit=500';try{this.txs=await this.api('/transactions'+q)}catch{}},
 
-    async function uploadFile(file, bank) {
-      const formData = new FormData();
-      formData.append("bank", bank);
-      formData.append("file", file);
+  async loadBAS(){
+    try{this.bas=await this.api('/bas')}catch{}
+    try{const h=await this.api('/gst/annual');this.gst=h.quarters||[]}catch{}
+    try{const q=await this.api('/bas/quarterly?year='+this.fy().split('-')[0]);this.$nextTick(()=>this.drawBAS(q.quarters))}catch{}
+  },
+  async loadTax(){
+    try{this.taxAU.co=await this.api('/tax/au/company')}catch{}
+    try{this.taxAU.pe=await this.api('/tax/au/personal')}catch{}
+    try{this.taxCA.co=await this.api('/tax/ca/corporate')}catch{}
+    try{this.taxCA.pe=await this.api('/tax/ca/personal')}catch{}
+  },
+  async loadFin(){
+    const q=this.ctry!=='ALL'?'?country='+this.ctry:'';
+    try{this.fin=await this.api('/financial-statements'+q);this.$nextTick(()=>this.drawPL())}catch{}
+  },
 
-      try {
-        const res = await fetch("/upload", {
-          method: "POST",
-          body: formData
-        });
-        if (!res.ok) {
-          addMessage("Upload error: " + res.status + " " + res.statusText, "agent");
-        } else {
-          const data = await res.json();
-          addMessage(data.message, "agent");
-        }
-      } catch (e) {
-        addMessage("Upload network error: " + e.message, "agent");
-      }
-    }
+  async chat(){
+    if(!this.ci.trim())return;
+    const m=this.ci.trim();this.msgs.push({r:'user',t:m});this.ci='';this.cl=true;
+    try{const r=await fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})});const d=await r.json();this.msgs.push({r:'bot',t:d.message})}
+    catch{this.msgs.push({r:'bot',t:'Error connecting to server.'})}
+    this.cl=false;this.$nextTick(()=>{const b=this.$refs.cbox;if(b)b.scrollTop=b.scrollHeight});
+  },
 
-    async function viewTransactions() {
-      try {
-        const res = await fetch("/transactions");
-        if (!res.ok) {
-          addMessage("Error fetching transactions: " + res.status + " " + res.statusText, "agent");
-        } else {
-          const txs = await res.json();
-          let msg = `Found ${txs.length} transactions:\n\n`;
-          for (const tx of txs.slice(0, 10)) {  // Show first 10
-            msg += `${tx.date} ${tx.description} ${tx.amount} ${tx.currency}\n`;
-          }
-          if (txs.length > 10) {
-            msg += `... and ${txs.length - 10} more`;
-          }
-          addMessage(msg, "agent");
-        }
-      } catch (e) {
-        addMessage("Network error: " + e.message, "agent");
-      }
-    }
+  async upload(ev,bank,side){
+    const f=ev.target.files[0];if(!f)return;
+    const fd=new FormData();fd.append('bank',bank);fd.append('file',f);
+    try{const r=await fetch('/upload',{method:'POST',body:fd});const d=await r.json();
+      const msg=d.error?d.error:'✓ '+d.count+' transactions from '+bank.toUpperCase();
+      if(side==='AU')this.rAU=msg;else this.rCA=msg;
+      this.toast(msg,d.error?'danger':'success');
+      if(!d.error){await this.loadTx();await this.loadAn();}
+    }catch{this.toast('Upload failed','danger')}
+  },
 
-    function handleFileSelect(file) {
-      // Auto-detect bank from filename or ask? For simplicity, assume ANZ if 'anz' in name, else RBC
-      const bank = file.name.toLowerCase().includes("anz") ? "anz" : "rbc";
-      uploadFile(file, bank);
-    }
-
-    uploadAnzEl.addEventListener("click", () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".csv";
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) uploadFile(file, "anz");
-      };
-      input.click();
+  drop(ev,side){
+    const f=ev.dataTransfer.files[0];if(!f)return;
+    const bank=side==='AU'?this.bkAU:this.bkCA;
+    const fd=new FormData();fd.append('bank',bank);fd.append('file',f);
+    fetch('/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+      const msg=d.error?d.error:'✓ '+d.count+' transactions from '+bank.toUpperCase();
+      if(side==='AU')this.rAU=msg;else this.rCA=msg;
+      this.toast(msg,d.error?'danger':'success');
     });
+    this.dAU=false;this.dCA=false;
+  },
 
-    uploadRbcEl.addEventListener("click", () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".csv";
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) uploadFile(file, "rbc");
-      };
-      input.click();
-    });
+  async mig(reset){
+    this.migR=true;
+    try{const r=await fetch('/migrate?reset='+reset,{method:'POST'});this.migD=await r.json();this.toast('Migration complete!','success')}
+    catch{this.toast('Migration failed','danger')}
+    this.migR=false;
+  },
+  async migStatus(){try{this.migD=await this.api('/migrate/status')}catch{}},
 
-    downloadAnzEl.addEventListener("click", async () => {
-      const formData = new FormData();
-      formData.append("bank", "anz");
-      formData.append("days", 30);
-      try {
-        const res = await fetch("/download-bank", { method: "POST", body: formData });
-        if (!res.ok) {
-          addMessage("Download error: " + res.status + " " + res.statusText, "agent");
-        } else {
-          const data = await res.json();
-          addMessage(data.message || data.error, "agent");
-        }
-      } catch (e) {
-        addMessage("Download error: " + e.message, "agent");
-      }
-    });
+  go(p){this.pg=p},
+  async refresh(){await this.loadAn();await this.loadTx();this.$nextTick(()=>this.drawIE());if(this.pg==='bas')await this.loadBAS();if(this.pg==='tax')await this.loadTax();if(this.pg==='fin')await this.loadFin()},
 
-    downloadRbcEl.addEventListener("click", async () => {
-      const formData = new FormData();
-      formData.append("bank", "rbc");
-      formData.append("days", 30);
-      try {
-        const res = await fetch("/download-bank", { method: "POST", body: formData });
-        if (!res.ok) {
-          addMessage("Download error: " + res.status + " " + res.statusText, "agent");
-        } else {
-          const data = await res.json();
-          addMessage(data.message || data.error, "agent");
-        }
-      } catch (e) {
-        addMessage("Download error: " + e.message, "agent");
-      }
-    });
+  filtTx(){return this.txs.filter(t=>(!this.srch||t.description.toLowerCase().includes(this.srch.toLowerCase()))&&(!this.bnkF||t.bank===this.bnkF))},
 
-    viewTxEl.addEventListener("click", viewTransactions);
+  fy(){const d=new Date();return d.getMonth()>=6?d.getFullYear()+'-'+String(d.getFullYear()+1).slice(2):(d.getFullYear()-1)+'-'+String(d.getFullYear()).slice(2)},
 
-    viewAnalyticsEl.addEventListener("click", async () => {
-        try {
-            const res = await fetch("/analytics");
-            if (!res.ok) {
-                addMessage("Error fetching analytics: " + res.status + " " + res.statusText, "agent");
-            } else {
-                const data = await res.json();
-                addMessage(`Analytics:\n${JSON.stringify(data, null, 2)}`, "agent");
-            }
-        } catch (e) {
-            addMessage("Network error: " + e.message, "agent");
-        }
-    });
+  fmt(v){return Math.abs(parseFloat(v)||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})},
 
-    dropZoneEl.addEventListener("click", () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".csv";
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) handleFileSelect(file);
-      };
-      input.click();
-    });
+  catStyle(code){
+    const m={'200':'#D1FAE5,#065F46','201':'#D1FAE5,#065F46','202':'#DCFCE7,#166534','400':'#FEF9C3,#713F12','401':'#DBEAFE,#1E40AF','402':'#EDE9FE,#4C1D95','403':'#FCE7F3,#831843','404':'#E0F2FE,#0C4A6E','405':'#FEF3C7,#78350F','406':'#F3F4F6,#374151','407':'#FFF7ED,#7C2D12','408':'#F0FDF4,#14532D','409':'#FDF4FF,#581C87','410':'#FFF1F2,#881337','499':'#F3F4F6,#6B7280'};
+    const c=(m[code]||'#F3F4F6,#6B7280').split(',');
+    return 'background:'+c[0]+';color:'+c[1]+';padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:500';
+  },
 
-    dropZoneEl.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropZoneEl.classList.add("dragover");
-    });
+  toast(msg,ty='success'){this.ts={on:true,msg,ty};setTimeout(()=>this.ts.on=false,4000)},
+  async api(u){const r=await fetch(u);return r.json()},
 
-    dropZoneEl.addEventListener("dragleave", () => {
-      dropZoneEl.classList.remove("dragover");
-    });
-
-    dropZoneEl.addEventListener("drop", (e) => {
-      e.preventDefault();
-      dropZoneEl.classList.remove("dragover");
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        handleFileSelect(files[0]);
-      }
-    });
-
-    sendEl.addEventListener("click", sendMessage);
-    inputEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    addMessage("Hi, I'm your local PHLedger agent. Upload CSVs or ask me about BAS, AU/CA tax, or P&L.", "agent");
-  </script>
+  drawIE(){
+    const ctx=document.getElementById('chartIE');if(!ctx)return;if(this.ch.ie)this.ch.ie.destroy();
+    const inc=this.an.total_income||0,exp=this.an.total_expenses||0;
+    this.ch.ie=new Chart(ctx,{type:'bar',data:{labels:['Q1','Q2','Q3','Q4'],datasets:[{label:'Income',data:[inc*.22,inc*.28,inc*.25,inc*.25],backgroundColor:'rgba(0,134,58,.8)',borderRadius:4},{label:'Expenses',data:[exp*.24,exp*.26,exp*.27,exp*.23],backgroundColor:'rgba(239,68,68,.7)',borderRadius:4}]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()}}}}});
+  },
+  drawCat(){
+    const ctx=document.getElementById('chartCat');if(!ctx)return;if(this.ch.cat)this.ch.cat.destroy();
+    this.ch.cat=new Chart(ctx,{type:'doughnut',data:{labels:['Software','Travel','Meals','Rent','Utilities','Other'],datasets:[{data:[20,15,12,25,8,20],backgroundColor:['#3B82F6','#8B5CF6','#F59E0B','#EF4444','#10B981','#6B7280'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},cutout:'62%'}});
+  },
+  drawBAS(qs){
+    const ctx=document.getElementById('chartBAS');if(!ctx||!qs)return;if(this.ch.bas)this.ch.bas.destroy();
+    this.ch.bas=new Chart(ctx,{type:'bar',data:{labels:qs.map(q=>'Q'+q.quarter+' '+q.label),datasets:[{label:'GST on Sales (1A)',data:qs.map(q=>q.gst_on_sales_1a),backgroundColor:'rgba(0,134,58,.8)',borderRadius:4},{label:'GST on Purchases (1B)',data:qs.map(q=>q.gst_on_purchases_1b),backgroundColor:'rgba(239,68,68,.7)',borderRadius:4},{label:'Net GST',data:qs.map(q=>q.net_gst_payable),backgroundColor:'rgba(12,133,153,.8)',borderRadius:4,type:'line'}]},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()}}}}});
+  },
+  drawPL(){
+    const ctx=document.getElementById('chartPL');if(!ctx)return;if(this.ch.pl)this.ch.pl.destroy();
+    const pl=this.fin.profit_loss||{};
+    this.ch.pl=new Chart(ctx,{type:'bar',data:{labels:['Revenue','Expenses','Net Income'],datasets:[{data:[pl.revenue||0,pl.expenses||0,pl.net_income||0],backgroundColor:['rgba(0,134,58,.8)','rgba(239,68,68,.8)',(pl.net_income||0)>=0?'rgba(12,133,153,.8)':'rgba(239,68,68,.8)'],borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString()}}}}});
+  },
+};}
+</script>
 </body>
 </html>
