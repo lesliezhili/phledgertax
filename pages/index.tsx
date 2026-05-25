@@ -17,6 +17,7 @@ declare global {
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
+import Script from 'next/script';
 
 const PAGE_TITLES = {
   dash:'Dashboard', tx:'Transactions', bank:'Banking',
@@ -239,8 +240,8 @@ export default function PHLedger() {
         <title>PHLedger — Free Bookkeeping for AU &amp; CA</title>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <link rel="preconnect" href="https://fonts.googleapis.com"/>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"/>
       </Head>
+      <Script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" strategy="beforeInteractive"/>
 
       {/* SIDEBAR */}
       <nav className="sidebar">
@@ -576,7 +577,7 @@ export default function PHLedger() {
           {/* ── CHAT ── */}
           {pg==='chat' && (
             <div className="cs" style={{maxWidth:680}}>
-              <div className="cs-h"><h6><i className="bi bi-robot me-2 text-primary"/>PHLedger AI Assistant</h6><span className="badge bg-light text-muted" style={{fontSize:'.69rem'}}>type 'help' for commands</span></div>
+              <div className="cs-h"><h6><i className="bi bi-robot me-2 text-primary"/>PHLedger AI Assistant</h6><span className="badge bg-light text-muted" style={{fontSize:'.69rem'}}>type &#39;help&#39; for commands</span></div>
               <div className="cs-b">
                 <div className="chat-box" ref={chatBox}>
                   {msgs.map((m,i)=><div key={i} className={`cb ${m.role}`}>{m.text}</div>)}
