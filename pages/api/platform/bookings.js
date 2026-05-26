@@ -2,7 +2,6 @@
 // Create and list bookings for any registered platform
 // Query param: ?platform_id=silverconnect
 import fs from 'fs';
-import { v4 as uuid } from 'uuid';
 import { getPlatform, platformDataPath } from '@/lib/platformRegistry';
 import { calculateFees } from '@/lib/platformFee';
 
