@@ -5,7 +5,7 @@
  * Response: { payoutId, providerAmount, status }
  */
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createEscrow, releaseEscrow } from "../../lib/payments/payto";
+import { createEscrow, releaseEscrow } from "../../../lib/payments/payto";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });

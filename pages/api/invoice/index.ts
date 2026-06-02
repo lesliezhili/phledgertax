@@ -7,7 +7,7 @@
  * Response: { invoiceId, invoiceNumber, total, status, viewUrl }
  */
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createInvoice, bookingToJournal } from "../../lib/invoicing";
+import { createInvoice, bookingToJournal } from "../../../lib/invoicing";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });

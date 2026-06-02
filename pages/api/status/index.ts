@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { costComparison } from "../../lib/payments/payto";
+import { costComparison } from "../../../lib/payments/payto";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const savings100 = costComparison(100);
