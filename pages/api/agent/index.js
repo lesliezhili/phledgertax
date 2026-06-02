@@ -1,0 +1,2 @@
+import{processMessage}from'../../../lib/agent/financeAgent';
+export default async function h(req,res){if(req.method==='GET')return res.json({agent:'PHLedger v3',cost:'$0'});if(req.method!=='POST')return res.status(405).end();const{message}=req.body;if(!message)return res.status(400).json({error:'message required'});try{res.json({success:true,response:await processMessage(message)});}catch(e){res.status(500).json({error:e.message});}}

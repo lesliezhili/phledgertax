@@ -1,7 +1,7 @@
 {
   "name": "phledgertax",
-  "version": "2.0.1",
-  "description": "Free open-source bookkeeping for AU & CA",
+  "version": "3.0.0",
+  "description": "Free finance agent \u2014 Vercel + Supabase + Regex NLP ($0/mo)",
   "private": true,
   "scripts": {
     "dev": "next dev",

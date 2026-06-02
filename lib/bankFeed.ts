@@ -1,0 +1,3 @@
+export const AU_R=[{p:/TRANSFER|DEPOSIT/i,a:'4-1000',t:'GST'},{p:/INTEREST/i,a:'4-2000',t:'GST_FREE'},{p:/XERO|SLACK|GITHUB/i,a:'5-1000',t:'INPUT'},{p:/AWS|VERCEL/i,a:'5-1010',t:'INPUT'},{p:/BANK FEE/i,a:'5-5000',t:'GST_FREE'},{p:/.*/,a:'5-9900',t:'INPUT'}];
+export const CA_R=[{p:/INTERAC.*FROM|DEPOSIT/i,a:'4-1000',t:'HST'},{p:/INTEREST/i,a:'4-2000',t:'ZERO_RATED'},{p:/SHOPIFY|AWS|ZOOM/i,a:'5-1010',t:'HST'},{p:/MONTHLY FEE/i,a:'5-5000',t:'EXEMPT'},{p:/.*/,a:'5-9900',t:'HST'}];
+export function categorise(d,amt,rules){const pfx=amt>0?'4-':'5-';const r=rules.find(x=>x.p.test(d)&&x.a.startsWith(pfx));return r||{a:amt>0?'4-3000':'5-9900',t:'INPUT'};}
