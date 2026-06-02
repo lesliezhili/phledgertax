@@ -1,11 +1,7 @@
+import Layout from '../components/Layout';
 import Head from'next/head';
 export default function About(){return(<><Head><title>About — PHLedger</title></Head>
-<div style={{minHeight:'100vh',fontFamily:'-apple-system,sans-serif',background:'#f8fafc'}}>
-<header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 20px',borderBottom:'1px solid #e5e7eb',background:'white'}}>
-<a href="/" style={{fontWeight:700,color:'#1e3a5f',textDecoration:'none'}}>📒 PHLedger</a>
-<div style={{display:'flex',gap:10,alignItems:'center'}}>
-<a href="/pricing" style={{fontSize:'.8rem',color:'#374151',textDecoration:'none'}}>Pricing</a>
-<a href="/auth/signin" style={{fontSize:'.8rem',padding:'6px 14px',background:'#059669',color:'white',borderRadius:6,textDecoration:'none'}}>Sign In</a></div></header>
+<Layout>
 <main style={{maxWidth:760,margin:'0 auto',padding:'48px 20px'}}>
 <h1 style={{fontSize:'2rem',color:'#1e3a5f',marginBottom:8}}>About PHLedger</h1>
 <p style={{fontSize:'1rem',color:'#374151',lineHeight:1.8,marginBottom:20}}>PHLedger is an intelligent finance platform purpose-built for Australian and Canadian small-to-medium businesses. We replace fragmented, expensive tools — bookkeeping (Xero/MYOB), payments (Stripe), and tax prep — with a single, modern platform powered by AI and real-time payment rails.</p>
@@ -41,5 +37,4 @@ export default function About(){return(<><Head><title>About — PHLedger</title>
 <p style={{margin:'0 0 16px',opacity:.9,fontSize:'.88rem'}}>14-day free trial. Plans from $25 CAD / $29 AUD per month.</p>
 <a href="/auth/signup" style={{padding:'10px 24px',background:'white',color:'#1e3a5f',borderRadius:6,textDecoration:'none',fontWeight:600}}>Get Started</a>
 </div></main>
-<footer style={{textAlign:'center',padding:'16px',borderTop:'1px solid #eee',fontSize:'.68rem',color:'#9ca3af'}}>© {new Date().getFullYear()} PHLedger Pty Ltd · Melbourne, Australia · <a href="https://www.linkedin.com/company/phledger/" style={{color:'#6b7280'}}>LinkedIn</a> · <a href="mailto:hello@phledger.com" style={{color:'#6b7280'}}>hello@phledger.com</a></footer>
-</div></>);}
+</Layout></>);}

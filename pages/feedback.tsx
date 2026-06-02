@@ -1,7 +1,8 @@
+import Layout from '../components/Layout';
 import{useState}from'react';import Head from'next/head';
 export default function Feedback(){const[msg,setMsg]=useState('');const[rating,setRating]=useState(5);const[email,setEmail]=useState('');const[cat,setCat]=useState('general');const[sent,setSent]=useState(false);
 const submit=async(e)=>{e.preventDefault();await fetch('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,rating,message:msg,category:cat})});setSent(true);};
-if(sent)return(<div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'-apple-system,sans-serif'}}><div style={{textAlign:'center'}}><h2 style={{color:'#059669'}}>Thank you!</h2><p style={{color:'#6b7280'}}>Your feedback helps us improve PHLedger.</p><a href="/" style={{color:'#059669'}}>Back to home</a></div></div>);
+if(sent)return(<Layout><div style={{textAlign:'center'}}><h2 style={{color:'#059669'}}>Thank you!</h2><p style={{color:'#6b7280'}}>Your feedback helps us improve PHLedger.</p><a href="/" style={{color:'#059669'}}>Back to home</a></div></Layout>);
 return(<><Head><title>Feedback — PHLedger</title></Head>
 <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#f8fafc',fontFamily:'-apple-system,sans-serif'}}>
 <div style={{background:'white',borderRadius:12,padding:'36px',boxShadow:'0 4px 24px rgba(0,0,0,.08)',width:'100%',maxWidth:440}}>

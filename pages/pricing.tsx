@@ -1,3 +1,4 @@
+import Layout from '../components/Layout';
 import{useState}from'react';import Head from'next/head';
 const plans=[
 
@@ -7,12 +8,7 @@ const plans=[
 ];
 export default function Pricing(){const[cur,setCur]=useState('AUD');const[annual,setAnnual]=useState(false);
 return(<><Head><title>Pricing — PHLedger</title></Head>
-<div style={{minHeight:'100vh',fontFamily:'-apple-system,sans-serif',background:'#f8fafc'}}>
-<header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 20px',borderBottom:'1px solid #e5e7eb',background:'white'}}>
-<a href="/" style={{fontWeight:700,color:'#1e3a5f',textDecoration:'none',fontSize:'1rem'}}>📒 PHLedger</a>
-<div style={{display:'flex',gap:8,alignItems:'center'}}>
-<a href="/auth/signin" style={{fontSize:'.8rem',color:'#374151',textDecoration:'none'}}>Sign In</a>
-<a href="/auth/signup" style={{fontSize:'.8rem',padding:'6px 14px',background:'#059669',color:'white',borderRadius:6,textDecoration:'none'}}>Sign Up Free</a></div></header>
+<Layout>
 <div style={{textAlign:'center',padding:'40px 20px 20px'}}>
 <h1 style={{fontSize:'2rem',color:'#1e3a5f',margin:0}}>Simple, transparent pricing</h1>
 <p style={{color:'#6b7280',margin:'8px 0 20px',fontSize:'.95rem'}}>Intelligent finance for Australian & Canadian businesses. 14-day free trial.</p>
@@ -33,4 +29,4 @@ return(<div key={p.id} style={{background:'white',borderRadius:12,padding:'24px 
 <div style={{textAlign:'center',padding:'20px',borderTop:'1px solid #e5e7eb',background:'white'}}>
 <p style={{fontSize:'.75rem',color:'#6b7280',margin:0}}>All plans include: No setup fees | PayTo $0/tx (AU) | Interac $0.25/tx (CA) | Supabase hosted | ATO-ready BAS</p>
 <p style={{fontSize:'.7rem',color:'#9ca3af',marginTop:6}}>Payment via PayTo NPP (AU) or Interac e-Transfer (CA). Powered by PHLedger.</p>
-</div></div></>);}
+</div></Layout></>);}

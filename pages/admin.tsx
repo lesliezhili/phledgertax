@@ -1,3 +1,4 @@
+import Layout from '../components/Layout';
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -20,15 +21,7 @@ export default function Admin() {
   if (!user) return null;
 
   return (<><Head><title>Admin — PHLedger</title></Head>
-  <div style={{minHeight:'100vh',fontFamily:'-apple-system,sans-serif',background:'#f8fafc'}}>
-    <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 20px',borderBottom:'1px solid #e5e7eb',background:'white'}}>
-      <a href="/" style={{fontWeight:700,color:'#1e3a5f',textDecoration:'none'}}>📒 PHLedger</a>
-      <div style={{display:'flex',gap:10,alignItems:'center'}}>
-        <span style={{fontSize:'.72rem',padding:'3px 8px',background:'#fef3c7',borderRadius:8,color:'#92400e',fontWeight:600}}>ADMIN</span>
-        <span style={{fontSize:'.78rem',color:'#6b7280'}}>{(user as any).email}</span>
-        <button onClick={()=>{localStorage.removeItem('ph_user');localStorage.removeItem('ph_token');router.push('/auth/signin');}} style={{fontSize:'.75rem',padding:'4px 10px',border:'1px solid #d1d5db',borderRadius:5,background:'white',cursor:'pointer'}}>Sign Out</button>
-      </div></header>
-
+  <Layout>
     <main style={{maxWidth:900,margin:'0 auto',padding:'32px 20px'}}>
       <h1 style={{fontSize:'1.6rem',color:'#1e3a5f',marginBottom:24}}>Admin Dashboard</h1>
 
@@ -85,8 +78,5 @@ export default function Admin() {
       </div>
     </main>
 
-    <footer style={{textAlign:'center',padding:'16px',fontSize:'.65rem',color:'#9ca3af',borderTop:'1px solid #eee'}}>
-      Powered by PHLedger · <a href="https://www.linkedin.com/company/phledger/" style={{color:'#6b7280'}}>LinkedIn</a>
-    </footer>
-  </div></>);
+    </Layout></>);
 }

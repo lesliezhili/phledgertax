@@ -1,3 +1,4 @@
+import Layout from '../../components/Layout';
 import { useState } from 'react';
 import Head from 'next/head';
 import { t, getLocale, Locale } from '../../lib/i18n';

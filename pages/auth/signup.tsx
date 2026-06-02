@@ -1,10 +1,11 @@
+import Layout from '../../components/Layout';
 import{useState}from'react';import Head from'next/head';import{useRouter}from'next/router';
 export default function SignUp(){const[email,setEmail]=useState('');const[pw,setPw]=useState('');const[name,setName]=useState('');const[country,setCountry]=useState('AU');const[err,setErr]=useState('');const[loading,setLoading]=useState(false);const router=useRouter();
 const submit=async(e)=>{e.preventDefault();setErr('');setLoading(true);
 try{const r=await fetch('/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pw,name,country})});const d=await r.json();
 if(!r.ok){setErr(d.error);setLoading(false);return;}localStorage.setItem('ph_user',JSON.stringify(d.user));router.push('/agent');}catch{setErr('Network error');}setLoading(false);};
 return(<><Head><title>Sign Up — PHLedger</title></Head>
-<div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#f8fafc,#ecfdf5)',fontFamily:'-apple-system,sans-serif'}}>
+<Layout>
 <div style={{background:'white',borderRadius:12,padding:'40px 36px',boxShadow:'0 4px 24px rgba(0,0,0,.08)',width:'100%',maxWidth:420}}>
 <div style={{textAlign:'center',marginBottom:24}}><h1 style={{fontSize:'1.4rem',color:'#1e3a5f',margin:0}}>📒 PHLedger</h1><p style={{color:'#6b7280',fontSize:'.85rem',margin:'6px 0 0'}}>Create your free account</p></div>
 <form onSubmit={submit}>
@@ -17,4 +18,4 @@ return(<><Head><title>Sign Up — PHLedger</title></Head>
 </form>
 <p style={{textAlign:'center',fontSize:'.75rem',color:'#9ca3af',margin:'12px 0 0'}}>Free plan: 500 txs/mo, BAS, tax returns, agent chat</p>
 <p style={{textAlign:'center',fontSize:'.78rem',color:'#6b7280',marginTop:12}}>Already have an account? <a href="/auth/signin" style={{color:'#059669',fontWeight:500}}>Sign in</a></p>
-</div></div></>);}
+</div></Layout></>);}
