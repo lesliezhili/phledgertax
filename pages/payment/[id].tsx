@@ -10,7 +10,7 @@ export default function PaymentPage() {
   const payment = { id: 'PAYTO-2026-0091', amount: 500, currency: 'AUD', rail: 'PayTo NPP', fee: 0, speed: '< 1 second', recipient: 'Provider Services Pty Ltd', sender: 'SilverConnect AU', reference: 'SC-BOOK-2026-0042', status: 'settled', date: '2026-06-02T10:30:00Z', settledAt: '2026-06-02T10:30:01Z' };
 
   return (<><Head><title>{T('payment_title')} — PHLedger</title></Head>
-  <div style={{maxWidth:600,margin:'0 auto',padding:32,fontFamily:'-apple-system,sans-serif'}}>
+  <Layout><div style={{maxWidth:600,margin:'0 auto',padding:32,fontFamily:'-apple-system,sans-serif'}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
       <h2 style={{margin:0,color:'#1e3a5f'}}>{T('payment_title')}</h2>
       <LanguageSelector compact onChange={l=>setL(l)}/></div>
@@ -29,5 +29,5 @@ export default function PaymentPage() {
         <div><span style={{color:'#6b7280'}}>{T('payment_net')}</span><br/><strong>${payment.amount.toFixed(2)}</strong></div>
       </div></div>
     <div style={{marginTop:20,textAlign:'center',fontSize:'.65rem',color:'#9ca3af'}}>{T('common_powered_by')}</div>
-  </div></>);
+  </div></Layout></>);
 }

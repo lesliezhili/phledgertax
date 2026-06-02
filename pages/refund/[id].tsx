@@ -10,7 +10,7 @@ export default function RefundPage() {
   const refund = { id: 'REF-2026-0015', amount: 79, currency: 'AUD', reason: 'Service not provided — cancellation within 24hrs', originalPayment: 'PAYTO-2026-0078', type: 'full', status: 'processed', date: '2026-06-01', processedAt: '2026-06-01T15:22:00Z' };
 
   return (<><Head><title>{T('refund_title')} — PHLedger</title></Head>
-  <div style={{maxWidth:600,margin:'0 auto',padding:32,fontFamily:'-apple-system,sans-serif'}}>
+  <Layout><div style={{maxWidth:600,margin:'0 auto',padding:32,fontFamily:'-apple-system,sans-serif'}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
       <h2 style={{margin:0,color:'#1e3a5f'}}>{T('refund_title')}</h2>
       <LanguageSelector compact onChange={l=>setL(l)}/></div>
@@ -28,5 +28,5 @@ export default function RefundPage() {
     <div style={{marginTop:16,padding:12,background:'#fef2f2',borderRadius:8,fontSize:'.78rem',color:'#991b1b'}}>
       <strong>{T('refund_policy')}:</strong> Full refunds within 24 hours. Partial refunds at provider discretion after 24hrs.</div>
     <div style={{marginTop:20,textAlign:'center',fontSize:'.65rem',color:'#9ca3af'}}>{T('common_powered_by')}</div>
-  </div></>);
+  </div></Layout></>);
 }
