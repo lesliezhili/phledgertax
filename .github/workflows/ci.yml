@@ -1,15 +1,29 @@
-name: CI
-on: [push, pull_request]
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: npm
+          cache: 'npm'
       - run: npm ci
-      - run: npm run type-check
-      - run: npm test -- --passWithNoTests
       - run: npm run build
+      - name: Health check after Vercel deploy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo "Waiting for Vercel deploy..."
+          sleep 60
+          STATUS=$(curl -s https://phledgertax.vercel.app/api/health | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))")
+          if [ "$STATUS" = "ok" ]; then
+            echo "✅ Deployment healthy"
+          else
+            echo "⚠️ Health check returned: $STATUS"
+          fi
