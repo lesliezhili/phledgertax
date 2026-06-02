@@ -1,128 +1,92 @@
-# PHLedger + Tax
+# PHLedger — Free Open-Source Payment + Invoicing Platform
 
-**Free open-source bookkeeping, payments & tax engine for AU/CA marketplace platforms.**
+**Replaces Stripe + Xero completely. Zero transaction fees.**
 
-[![CI/CD](https://github.com/lesliezhili/phledgertax/actions/workflows/ci.yml/badge.svg)](https://github.com/lesliezhili/phledgertax/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+## What It Does
 
-## 🚀 What Is This?
+| Feature | Replaces | Monthly Savings |
+|---------|----------|-----------------|
+| PayTo payments (NPP real-time) | Stripe (1.7% + 30c/tx) | ~$2,000+ |
+| Native invoicing + ledger | Xero ($27-78/month) | ~$50+ |
+| Escrow + split payments | Stripe Connect (0.5% + fees) | ~$500+ |
+| BAS/GST reports | Xero BAS module | included |
+| **Total** | | **$2,500+/month** |
 
-An open-source alternative to Stripe + Xero for marketplace platforms (like SilverConnect). Self-hosted, AU/CA tax-compliant, zero payment processing fees on bank-rail transactions.
-
-## 📦 Modules
-
-| Module | Description | Status |
-|--------|-------------|--------|
-| **Bookkeeping** | CSV import from 9 banks, auto-categorisation, Chart of Accounts | ✅ Live |
-| **BAS/Tax** | AU BAS drafts (G1/G11/1A/1B), CA GST filing | ✅ Live |
-| **Payments Engine** | Marketplace split payments, escrow, provider payouts | 🚧 New |
-| **Xero Connector** | OAuth 2.0, invoice sync, BAS data push | 🚧 New |
-| **PayTo (AU)** | NPP real-time payments via PayTo mandates | 📋 Planned |
-| **Interac (CA)** | Interac e-Transfer integration | 📋 Planned |
-
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                 Your Platform                     │
-│          (e.g., SilverConnect Global)            │
-├─────────────────────────────────────────────────┤
-│                                                   │
-│  lib/payments/engine.ts  ←── Split payment logic  │
-│  connectors/xero/        ←── Xero 2-way sync     │
-│  lib/basAu.js            ←── AU BAS generation    │
-│  lib/taxCa.js            ←── CA GST filing        │
-│  lib/csvIngestion.js     ←── Bank CSV import      │
-│                                                   │
-├─────────────────────────────────────────────────┤
-│  Payment Rails                                    │
-│  ├── PayTo (AU NPP) — $0 fee, real-time          │
-│  ├── BECS Direct Debit — $0.30/tx                 │
-│  ├── Interac e-Transfer (CA) — $0 fee             │
-│  └── Stripe (fallback for cards) — 1.7%+30c      │
-└─────────────────────────────────────────────────┘
+Customer Bank ──PayTo──→ Platform Escrow ──PayTo──→ Provider Bank
+                              │
+                         PHLedger DB
+                              │
+                    ┌─────────┼─────────┐
+                    │         │         │
+                Invoices  Journals  BAS/GST
 ```
 
-## 💰 Payments Engine
+## API Endpoints
+
+| Endpoint | Replaces | Description |
+|----------|----------|-------------|
+| `POST /api/pay` | `stripe.paymentIntents.create()` | Initiate payment via PayTo |
+| `POST /api/invoice` | `POST /api.xero.com/Invoices` | Create invoice + journal entry |
+| `POST /api/payout` | Stripe Connect transfer | Release escrow to provider |
+| `GET /api/status` | - | Health + cost comparison |
+
+## Integration with SilverConnect
 
 ```typescript
-import { createSplitPayment, DEFAULT_AU_CONFIG } from "./lib/payments/engine";
+// BEFORE (Stripe + Xero = $2,500/month)
+const pi = await stripe.paymentIntents.create({ amount: 11000, currency: "aud" });
+const inv = await xero.invoices.create({ ... });
 
-// Customer pays $100 for a service
-const payment = createSplitPayment("ORDER-001", 100, {
-  ...DEFAULT_AU_CONFIG,
-  platformFeePercent: 15, // You keep 15%
+// AFTER (PHLedger = $0/month)
+const pay = await fetch("https://phledger.vercel.app/api/pay", {
+  method: "POST",
+  body: JSON.stringify({ amount: 110, bookingId, customerBsb, customerAccount })
 });
-
-// Result:
-// payment.customerAmount = $100
-// payment.platformFee = $15
-// payment.platformGst = $1.50 (GST on your fee)
-// payment.providerPayout = $85
-// payment.status = "pending" → "in_escrow" → "released"
+const inv = await fetch("https://phledger.vercel.app/api/invoice", {
+  method: "POST", 
+  body: JSON.stringify({ bookingId, totalAmount: 110, customerName })
+});
 ```
 
-## 🔗 Xero Integration
+## Payment Rails
 
-```typescript
-import { getXeroAuthUrl, createXeroInvoice } from "./connectors/xero";
+### Australia (PayTo / NPP)
+- **Real-time** settlement (< 1 second)
+- **Zero fees** to platform (NPP is free infrastructure)
+- Customer creates mandate → Platform pulls funds
+- Provider paid instantly on service completion
 
-// 1. Redirect user to Xero OAuth
-const authUrl = getXeroAuthUrl(config, "random-state");
+### Canada (Interac e-Transfer)
+- **$0.25/transaction** (vs Stripe $3.20)
+- Settlement in minutes
 
-// 2. After callback, create invoice
-const result = await createXeroInvoice(invoice, tokens);
-```
+### Fallback: Stripe
+- For international card payments
+- Only used when PayTo/Interac unavailable
 
-## 🇦🇺 AU Tax (BAS)
+## Cost Per $110 Booking
 
-- Auto-calculates G1, G11, 1A, 1B fields
-- Quarterly BAS draft generation
-- GST-inclusive / GST-exclusive handling
-- ABN validation
+| Component | Stripe + Xero | PHLedger |
+|-----------|---------------|----------|
+| Payment processing | $2.17 | $0.00 |
+| Invoice creation | $0.03 | $0.00 |
+| Provider payout | $0.55 | $0.00 |
+| **Total per booking** | **$2.75** | **$0.00** |
 
-## 🇨🇦 CA Tax (GST/HST)
+At 1,000 bookings/month: **Save $2,750/month ($33,000/year)**
 
-- Federal GST (5%) + Provincial HST where applicable
-- Input Tax Credit (ITC) tracking
-- GST/HST filing periods
-
-## 🏦 Supported Banks (CSV Import)
-
-**Australia:** ANZ, NAB, CBA, Westpac
-**Canada:** RBC, TD, BMO, Scotiabank, CIBC
-
-## 🛠️ Setup
+## Getting Started
 
 ```bash
-git clone https://github.com/lesliezhili/phledgertax.git
-cd phledgertax
+git clone https://github.com/lesliezhili/phledgertax
 npm install
-cp .env.example .env.local
-npm run dev
+npm test          # Run all tests
+npm run dev       # Start API server (localhost:3000)
 ```
 
-### Environment Variables
+## License
 
-```env
-# Xero OAuth (get from https://developer.xero.com)
-XERO_CLIENT_ID=
-XERO_CLIENT_SECRET=
-XERO_REDIRECT_URI=http://localhost:3000/api/xero/callback
-
-# Supabase (for storage)
-NEXT_PUBLIC_SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-
-# Stripe (fallback for card payments)
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-```
-
-## 📄 License
-
-MIT — Free for personal and commercial use.
-
-## 🙏 Foundation
-
-Built with love. God / Jesus / Spirit.
+MIT — Free and open source forever.
