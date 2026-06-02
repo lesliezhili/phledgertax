@@ -6,6 +6,6 @@ export default function handler(req, res) {
     agent: true,
     supabase: isConnected(),
     timestamp: new Date().toISOString(),
-    stack: { hosting: 'Vercel Free', db: 'Supabase Free', nlp: 'Regex (free)', payments_au: 'PayTo $0', payments_ca: 'Interac $0.25' }
+    stack: { hosting: 'Vercel', db: 'Supabase', nlp: 'Regex NLP', payments_au: 'PayTo NPP', payments_ca: 'Interac e-Transfer' }
   });
 }

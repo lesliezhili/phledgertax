@@ -8,7 +8,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   return res.status(200).json({
     service: "PHLedger Payment + Invoicing Platform",
     branding: "Powered by PHLedger",
-    license: "Free for PHLedger & SilverConnect only. Commercial license required for others.",
+    license: "Commercial platform. PHLedger & SilverConnect: internal license. Others: paid plans from $29 AUD/mo.",
     version: "1.0.0",
     status: "operational",
     replaces: ["Stripe ($2,000+/month for marketplace)", "Xero ($27-78/month)"],
@@ -24,7 +24,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       "$1000_booking": { stripe: `$${savings1000.stripe}`, phledger: "$0.00", savings: `$${savings1000.savings}` },
     },
     paymentRails: {
-      AU: "PayTo (NPP) — real-time, zero fees",
+      AU: "PayTo (NPP) — real-time, real-time settlement",
       CA: "Interac e-Transfer — $0.25/tx",
       fallback: "Stripe (if card payment required)",
     },

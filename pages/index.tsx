@@ -372,11 +372,7 @@ export default function PHLedger() {
             </a>
           ))}
         </div>
-        <div className="nav-lbl" style={{marginTop:'12px'}}>Account</div>
-          <a href="/auth/signin" style={{display:'block',padding:'6px 12px',fontSize:'.78rem',color:'#374151',textDecoration:'none',borderRadius:'6px'}}><i className="bi bi-box-arrow-in-right" style={{marginRight:'6px'}}/>Sign In</a>
-          <a href="/auth/signup" style={{display:'block',padding:'6px 12px',fontSize:'.78rem',color:'#374151',textDecoration:'none',borderRadius:'6px'}}><i className="bi bi-person-plus" style={{marginRight:'6px'}}/>Sign Up</a>
-          <a href="/pricing" style={{display:'block',padding:'6px 12px',fontSize:'.78rem',color:'#374151',textDecoration:'none',borderRadius:'6px'}}><i className="bi bi-tag" style={{marginRight:'6px'}}/>Pricing</a>
-        </div><div className="sb-bot"><div style={{marginBottom:"8px",padding:"0 8px"}}><a href="/auth/signin" style={{display:"block",fontSize:".72rem",padding:"4px 0",color:"#374151",textDecoration:"none"}}>Sign In</a><a href="/auth/signup" style={{display:"block",fontSize:".72rem",padding:"4px 0",color:"#059669",textDecoration:"none",fontWeight:500}}>Sign Up Free Trial</a><a href="/pricing" style={{display:"block",fontSize:".72rem",padding:"4px 0",color:"#6b7280",textDecoration:"none"}}>View Pricing</a></div><div style={{fontSize:".55rem",color:"#9ca3af",marginBottom:4,textAlign:"center"}}><a href="/about" style={{color:"#6b7280",textDecoration:"none"}}>Powered by PHLedger</a></div>
+        <div className="sb-bot"><div style={{fontSize:".7rem",padding:"0 10px 8px",lineHeight:1.8}}><a href="/auth/signin" style={{color:"#9ca3af",textDecoration:"none"}}>Sign In</a>{" · "}<a href="/auth/signup" style={{color:"#4ade80",textDecoration:"none"}}>Sign Up</a>{" · "}<a href="/pricing" style={{color:"#9ca3af",textDecoration:"none"}}>Pricing</a></div>
           <div className="d-flex gap-2 flex-wrap align-items-center">
             <span className="sb-badge" style={{textTransform:'uppercase'}}>{health.backend||'csv'}</span>
             <span className="sb-badge" style={{color:health.status==='ok'?'#4ade80':'#f87171',letterSpacing:0}}>
