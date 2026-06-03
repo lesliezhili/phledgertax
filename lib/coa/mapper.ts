@@ -1,0 +1,111 @@
+// lib/coa/mapper.ts — Maps bank transactions to Chart of Accounts codes
+// Uses AU_COA for ANZ/NAB/CBA/Westpac, CA_COA for RBC/TD/BMO/Scotiabank/CIBC
+
+export const AU_CATEGORY_MAP = {
+  // Revenue (4xxx)
+  'Client Payment':       { code: '4020', name: 'Service Revenue', taxCode: 'G1', gst: 0.10 },
+  'Invoice Payment':      { code: '4010', name: 'Sales Revenue', taxCode: 'G1', gst: 0.10 },
+  'Platform Fee':         { code: '4030', name: 'Platform Fees Earned', taxCode: 'G1', gst: 0.10 },
+  'Subscription':         { code: '4040', name: 'Subscription Revenue', taxCode: 'G1', gst: 0.10 },
+  'Interest':             { code: '4100', name: 'Interest Income', taxCode: 'GF', gst: 0 },
+  // COGS (5xxx)
+  'Cloud Infrastructure': { code: '5050', name: 'Cloud Infrastructure (COGS)', taxCode: 'G11', gst: 0.10 },
+  'Payment Processing':   { code: '5060', name: 'Payment Processing Fees', taxCode: 'GF', gst: 0 },
+  'Subcontractor':        { code: '5040', name: 'Subcontractor Costs', taxCode: 'G11', gst: 0.10 },
+  // Operating Expenses (6xxx)
+  'Wages':                { code: '6010', name: 'Wages & Salaries', taxCode: 'W1', gst: 0 },
+  'Superannuation':       { code: '6020', name: 'Superannuation (SG 11.5%)', taxCode: 'GF', gst: 0 },
+  'Rent':                 { code: '6100', name: 'Rent & Lease', taxCode: 'G11', gst: 0.10 },
+  'Utilities':            { code: '6110', name: 'Utilities', taxCode: 'G11', gst: 0.10 },
+  'Software':             { code: '6540', name: 'Software & Subscriptions', taxCode: 'G11', gst: 0.10 },
+  'Cloud Hosting':        { code: '6550', name: 'Cloud Hosting (SaaS/IaaS)', taxCode: 'G11', gst: 0.10 },
+  'Telephone':            { code: '6500', name: 'Telephone & Internet', taxCode: 'G11', gst: 0.10 },
+  'Insurance':            { code: '6600', name: 'Insurance - General', taxCode: 'GF', gst: 0 },
+  'Marketing':            { code: '6300', name: 'Advertising & Marketing', taxCode: 'G11', gst: 0.10 },
+  'Legal':                { code: '6210', name: 'Legal Fees', taxCode: 'G11', gst: 0.10 },
+  'Accounting':           { code: '6200', name: 'Accounting & Bookkeeping', taxCode: 'G11', gst: 0.10 },
+  'Bank Fee':             { code: '6800', name: 'Bank Fees & Charges', taxCode: 'GF', gst: 0 },
+  'Motor Vehicle':        { code: '6400', name: 'Motor Vehicle Expenses', taxCode: 'G11', gst: 0.10 },
+  'Depreciation':         { code: '6700', name: 'Depreciation - Equipment', taxCode: 'GF', gst: 0 },
+  'Bad Debt':             { code: '6900', name: 'Bad Debts Written Off', taxCode: 'GF', gst: 0 },
+  'Sundry':               { code: '6940', name: 'Sundry Expenses', taxCode: 'G11', gst: 0.10 },
+};
+
+export const CA_CATEGORY_MAP = {
+  // Revenue (4xxx)
+  'Client Payment':       { code: '4020', name: 'Service Revenue', taxCode: 'HST', hst: 0.13 },
+  'Invoice Payment':      { code: '4010', name: 'Sales Revenue', taxCode: 'HST', hst: 0.13 },
+  'Platform Fee':         { code: '4030', name: 'Platform Fees Earned', taxCode: 'HST', hst: 0.13 },
+  'Subscription':         { code: '4040', name: 'Subscription Revenue', taxCode: 'HST', hst: 0.13 },
+  'Interest':             { code: '4100', name: 'Interest Income', taxCode: 'EXEMPT', hst: 0 },
+  'Capital Gain':         { code: '4210', name: 'Capital Gains', taxCode: 'EXEMPT', hst: 0 },
+  // COGS (5xxx)
+  'Cloud Infrastructure': { code: '5050', name: 'Cloud Infrastructure (COGS)', taxCode: 'HST', hst: 0.13 },
+  'Payment Processing':   { code: '5060', name: 'Payment Processing (Interac $0.25)', taxCode: 'EXEMPT', hst: 0 },
+  'Subcontractor':        { code: '5040', name: 'Subcontractor Costs', taxCode: 'HST', hst: 0.13 },
+  // Operating Expenses (6xxx)
+  'Wages':                { code: '6010', name: 'Wages & Salaries', taxCode: 'EXEMPT', hst: 0 },
+  'CPP':                  { code: '6020', name: 'CPP Contributions (Employer 5.95%)', taxCode: 'EXEMPT', hst: 0 },
+  'EI':                   { code: '6030', name: 'EI Premiums (Employer 1.63%)', taxCode: 'EXEMPT', hst: 0 },
+  'Rent':                 { code: '6100', name: 'Rent & Lease', taxCode: 'HST', hst: 0.13 },
+  'Utilities':            { code: '6110', name: 'Utilities (Hydro)', taxCode: 'HST', hst: 0.13 },
+  'Software':             { code: '6540', name: 'Software & Subscriptions', taxCode: 'HST', hst: 0.13 },
+  'Cloud Hosting':        { code: '6550', name: 'Cloud Hosting (SaaS/IaaS)', taxCode: 'HST', hst: 0.13 },
+  'Telephone':            { code: '6500', name: 'Telephone & Internet', taxCode: 'HST', hst: 0.13 },
+  'Insurance':            { code: '6600', name: 'Insurance - General', taxCode: 'EXEMPT', hst: 0 },
+  'Marketing':            { code: '6300', name: 'Advertising & Marketing', taxCode: 'HST', hst: 0.13 },
+  'Legal':                { code: '6210', name: 'Legal Fees', taxCode: 'HST', hst: 0.13 },
+  'Accounting':           { code: '6200', name: 'Accounting & Bookkeeping', taxCode: 'HST', hst: 0.13 },
+  'Bank Fee':             { code: '6800', name: 'Bank Fees & Charges', taxCode: 'EXEMPT', hst: 0 },
+  'Interac Fee':          { code: '6820', name: 'Interac Transaction Fees ($0.25)', taxCode: 'EXEMPT', hst: 0 },
+  'Meals':                { code: '6940', name: 'Meals & Entertainment (50%)', taxCode: 'HST', hst: 0.13 },
+  'CCA Equipment':        { code: '6700', name: 'CCA Class 8 (Equipment 20%)', taxCode: 'HST', hst: 0.13 },
+  'CCA Software':         { code: '6720', name: 'CCA Class 12 (Software 100%)', taxCode: 'HST', hst: 0.13 },
+  'Bad Debt':             { code: '6900', name: 'Bad Debts Written Off', taxCode: 'EXEMPT', hst: 0 },
+  'Sundry':               { code: '6940', name: 'Meals & Entertainment (50%)', taxCode: 'HST', hst: 0.13 },
+};
+
+// Pattern rules that map to the above categories
+export const AU_RULES = [
+  { pattern: /client|invoice|payment received|deposit/i, category: 'Client Payment' },
+  { pattern: /platform fee|booking fee/i, category: 'Platform Fee' },
+  { pattern: /subscription/i, category: 'Subscription' },
+  { pattern: /interest/i, category: 'Interest' },
+  { pattern: /aws|azure|google cloud|vercel/i, category: 'Cloud Hosting' },
+  { pattern: /xero|slack|github|atlassian|zoom/i, category: 'Software' },
+  { pattern: /telstra|optus|vodafone|tpg/i, category: 'Telephone' },
+  { pattern: /rent|lease|real estate/i, category: 'Rent' },
+  { pattern: /power|electricity|water|gas|energy/i, category: 'Utilities' },
+  { pattern: /insurance|allianz|nrma/i, category: 'Insurance' },
+  { pattern: /bank fee|monthly fee|atm/i, category: 'Bank Fee' },
+  { pattern: /salary|payroll|wages/i, category: 'Wages' },
+  { pattern: /super|superannuation/i, category: 'Superannuation' },
+  { pattern: /fuel|petrol|bp|shell/i, category: 'Motor Vehicle' },
+  { pattern: /marketing|advertising|google ads|facebook ads/i, category: 'Marketing' },
+  { pattern: /legal|lawyer|solicitor/i, category: 'Legal' },
+  { pattern: /accounting|bookkeeping|tax agent/i, category: 'Accounting' },
+  { pattern: /contractor|freelance/i, category: 'Subcontractor' },
+];
+
+export const CA_RULES = [
+  { pattern: /interac.*from|deposit|payment/i, category: 'Client Payment' },
+  { pattern: /platform fee|booking/i, category: 'Platform Fee' },
+  { pattern: /subscription/i, category: 'Subscription' },
+  { pattern: /interest/i, category: 'Interest' },
+  { pattern: /aws|azure|google cloud|shopify/i, category: 'Cloud Hosting' },
+  { pattern: /quickbooks|zoom|slack|github/i, category: 'Software' },
+  { pattern: /rogers|bell|telus|mobile/i, category: 'Telephone' },
+  { pattern: /rent|lease|wework/i, category: 'Rent' },
+  { pattern: /hydro|electricity|water|enbridge/i, category: 'Utilities' },
+  { pattern: /insurance|manulife|sun life/i, category: 'Insurance' },
+  { pattern: /monthly fee|bank fee|interac fee/i, category: 'Bank Fee' },
+  { pattern: /salary|payroll/i, category: 'Wages' },
+  { pattern: /cpp|canada pension/i, category: 'CPP' },
+  { pattern: /ei premium|employment insurance/i, category: 'EI' },
+  { pattern: /fuel|petrol|esso|chevron/i, category: 'Motor Vehicle' },
+  { pattern: /marketing|advertising|google ads/i, category: 'Marketing' },
+  { pattern: /legal|lawyer/i, category: 'Legal' },
+  { pattern: /accounting|bookkeeping/i, category: 'Accounting' },
+  { pattern: /contractor|freelance/i, category: 'Subcontractor' },
+  { pattern: /restaurant|cafe|tim hortons|starbucks|meal/i, category: 'Meals' },
+];
